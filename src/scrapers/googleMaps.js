@@ -409,9 +409,10 @@ export const scrapeGoogleMaps = async ({
 
     const detailCrawler = new PuppeteerCrawler({
         proxyConfiguration,
-        maxConcurrency: 2, // VERY LOW to prevent CPU overload
-        maxRequestRetries: 2,
-        requestHandlerTimeoutSecs: 30, // Reduced from 60 for faster processing
+        maxConcurrency: 1, // Further reduced to 1 for stability
+        maxRequestRetries: 3, // Increased retries for network errors
+        requestHandlerTimeoutSecs: 45, // Increased slightly for reliability
+        navigationTimeoutSecs: 30, // Explicit navigation timeout
 
         launchContext: {
             launchOptions: {
@@ -565,6 +566,24 @@ export const scrapeGoogleMaps = async ({
 
         failedRequestHandler({ request, error }) {
             console.warn(`⚠️ Request failed for ${request.userData.businessName}: ${error.message}`);
+
+            // Still add partial data even if detail fetch fails
+            const partialLead = {
+                businessName: request.userData.businessName,
+                googleMapsUrl: request.url,
+                rating: request.userData.rating,
+                reviewCount: request.userData.reviewCount,
+                phone: null,
+                website: null,
+                address: null,
+                category: null,
+                claimed: false,
+                socialLinks: {},
+                error: `Failed to fetch details: ${error.message}`,
+            };
+
+            detailedLeads.push(partialLead);
+            console.log(`⚠️ Added partial data for: ${partialLead.businessName}`);
         },
     });
 
