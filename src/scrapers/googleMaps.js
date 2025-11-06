@@ -75,17 +75,25 @@ export const scrapeGoogleMaps = async ({
                     await page.waitForTimeout(2000);
 
                     // Extract visible business cards with updated selectors
-                    const newBusinessCards = await page.evaluate(() => {
+                    const extractionResult = await page.evaluate(() => {
                         const cards = [];
+                        const debug = { selectors: {}, errors: [] };
 
                         // Find all business listing containers in the feed
                         const feed = document.querySelector('[role="feed"]');
-                        if (!feed) return cards;
+                        if (!feed) {
+                            debug.feedFound = false;
+                            return { cards, debug };
+                        }
+                        debug.feedFound = true;
 
                         // Try multiple selector strategies for business cards
-                        const listItems = feed.querySelectorAll('div[role="article"], div.Nv2PK, a[href*="/maps/place/"]');
+                        debug.selectors.articles = feed.querySelectorAll('div[role="article"]').length;
+                        debug.selectors.nv2pk = feed.querySelectorAll('div.Nv2PK').length;
+                        debug.selectors.placeLinks = feed.querySelectorAll('a[href*="/maps/place/"]').length;
 
-                        console.log(`Found ${listItems.length} potential business elements`);
+                        const listItems = feed.querySelectorAll('div[role="article"], div.Nv2PK, a[href*="/maps/place/"]');
+                        debug.totalElements = listItems.length;
 
                         const processedUrls = new Set();
 
@@ -160,13 +168,19 @@ export const scrapeGoogleMaps = async ({
                                     });
                                 }
                             } catch (err) {
-                                console.error('Error extracting card:', err.message);
+                                debug.errors.push(err.message);
                             }
                         });
 
-                        console.log(`Extracted ${cards.length} business cards`);
-                        return cards;
+                        debug.cardsExtracted = cards.length;
+                        return { cards, debug };
                     });
+
+                    const newBusinessCards = extractionResult.cards;
+
+                    // Log diagnostic info
+                    console.log(`🔍 DIAGNOSTICS:`, JSON.stringify(extractionResult.debug, null, 2));
+                    console.log(`📊 Found ${extractionResult.debug.totalElements} elements, extracted ${extractionResult.debug.cardsExtracted} cards`);
 
                     // Add new unique businesses
                     let addedCount = 0;
