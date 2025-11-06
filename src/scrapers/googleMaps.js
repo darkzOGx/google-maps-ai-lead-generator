@@ -37,24 +37,22 @@ export const scrapeGoogleMaps = async ({
     let proxyConfiguration;
     if (proxyConfig?.useApifyProxy) {
         try {
-            // Try user's preferred proxy groups first
+            // Use user's preferred proxy groups, or auto-select if not specified
             const proxyGroups = (proxyConfig.apifyProxyGroups && proxyConfig.apifyProxyGroups.length > 0)
                 ? proxyConfig.apifyProxyGroups
-                : ['DATACENTER']; // Default to datacenter proxies for best performance
+                : undefined; // Let Apify auto-select from available proxies
 
             proxyConfiguration = await Actor.createProxyConfiguration({
                 groups: proxyGroups,
                 countryCode: proxyConfig.countryCode,
             });
-            console.log(`🔒 Using proxy groups: ${proxyGroups.join(', ')}`);
+            console.log(`🔒 Using ${proxyGroups ? 'proxy groups: ' + proxyGroups.join(', ') : 'auto-selected proxies'}`);
         } catch (proxyError) {
             console.warn(`⚠️ Proxy setup failed: ${proxyError.message}`);
-            // Fallback: Try without country restriction
+            // Fallback: Try without country restriction (auto-select proxies)
             try {
-                proxyConfiguration = await Actor.createProxyConfiguration({
-                    groups: ['DATACENTER'],
-                });
-                console.log('🔒 Using fallback proxies (DATACENTER)');
+                proxyConfiguration = await Actor.createProxyConfiguration();
+                console.log('🔒 Using fallback proxies (auto-selected)');
             } catch (fallbackError) {
                 console.warn('⚠️ All proxies failed, continuing without proxies');
                 proxyConfiguration = undefined;

@@ -264,11 +264,11 @@
     "proxy": {
       "title": "Proxy Configuration",
       "type": "object",
-      "description": "Proxy settings for scraping. DATACENTER proxies are fast and reliable for Google Maps scraping.",
+      "description": "Proxy settings for scraping. Leave groups empty for automatic proxy selection (recommended).",
       "editor": "proxy",
       "default": {
         "useApifyProxy": true,
-        "apifyProxyGroups": ["DATACENTER"]
+        "apifyProxyGroups": []
       }
     },
 
