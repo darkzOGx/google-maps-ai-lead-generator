@@ -3,39 +3,30 @@
   "type": "object",
   "schemaVersion": 1,
   "properties": {
-    "searchQueries": {
-      "title": "Search Queries",
-      "type": "array",
-      "description": "List of category + location combinations to scrape from Google Maps",
-      "editor": "json",
-      "default": [
-        {
-          "category": "software companies",
-          "location": "San Francisco, CA",
-          "maxResults": 10
-        }
-      ],
-      "prefill": [
-        {
-          "category": "software companies",
-          "location": "San Francisco, CA",
-          "maxResults": 10
-        }
-      ],
-      "example": [
-        {
-          "category": "marketing agencies",
-          "location": "New York, NY",
-          "maxResults": 500,
-          "language": "en"
-        },
-        {
-          "category": "tech startups",
-          "location": "Austin, TX",
-          "maxResults": 250,
-          "language": "en"
-        }
-      ]
+    "searchQuery": {
+      "title": "Search term(s)",
+      "type": "string",
+      "description": "Business category or type to search (e.g., 'software companies', 'restaurants', 'marketing agencies')",
+      "editor": "textfield",
+      "default": "software companies",
+      "example": "restaurants"
+    },
+    "location": {
+      "title": "Location (use only one location per run)",
+      "type": "string",
+      "description": "City, state, or region to search in",
+      "editor": "textfield",
+      "default": "San Francisco, CA",
+      "example": "New York, USA"
+    },
+    "maxResults": {
+      "title": "Number of places to extract (per each search term or URL)",
+      "type": "integer",
+      "description": "Maximum number of businesses to scrape",
+      "minimum": 1,
+      "maximum": 10000,
+      "default": 50,
+      "example": 500
     },
 
     "language": {
@@ -48,237 +39,90 @@
       "default": "en"
     },
 
+    "minRating": {
+      "title": "Set a minimum star rating",
+      "type": "number",
+      "description": "Only scrape businesses with rating >= this value (0-5 stars). Set to 0 for no filter.",
+      "minimum": 0,
+      "maximum": 5,
+      "default": 4.0,
+      "example": 4.5
+    },
+    "minReviews": {
+      "title": "Minimum number of reviews",
+      "type": "integer",
+      "description": "Filter out businesses with too few reviews (indicates low activity). Set to 0 for no filter.",
+      "minimum": 0,
+      "default": 10,
+      "example": 20
+    },
+    "hasWebsite": {
+      "title": "Scrape places with/without a website",
+      "type": "boolean",
+      "description": "Only include businesses with websites (required for email extraction)",
+      "default": true
+    },
     "skipClosedPlaces": {
-      "title": "Skip Closed Places",
+      "title": "Skip closed places",
       "type": "boolean",
       "description": "Filter out permanently closed businesses",
       "default": true
     },
-
-    "filters": {
-      "title": "Advanced Filters",
-      "type": "object",
-      "description": "Filter businesses by quality signals to improve lead quality",
-      "editor": "json",
-      "default": {
-        "minRating": 3.0,
-        "minReviews": 0,
-        "hasWebsite": true,
-        "hasSocialMedia": false,
-        "claimedListing": false
-      },
-      "prefill": {
-        "minRating": 3.0,
-        "minReviews": 0,
-        "hasWebsite": true,
-        "hasSocialMedia": false,
-        "claimedListing": false
-      },
-      "properties": {
-        "minRating": {
-          "title": "Minimum Rating",
-          "type": "number",
-          "minimum": 0,
-          "maximum": 5,
-          "default": 4.0,
-          "description": "Only scrape businesses with rating >= this value (0-5 stars)"
-        },
-        "minReviews": {
-          "title": "Minimum Reviews",
-          "type": "integer",
-          "minimum": 0,
-          "default": 10,
-          "description": "Filter out businesses with too few reviews (indicates low activity)"
-        },
-        "hasWebsite": {
-          "title": "Must Have Website",
-          "type": "boolean",
-          "default": true,
-          "description": "Only include businesses with websites (required for email extraction)"
-        },
-        "hasSocialMedia": {
-          "title": "Must Have Social Media",
-          "type": "boolean",
-          "default": false,
-          "description": "Only include businesses with LinkedIn/Facebook/Twitter profiles"
-        },
-        "claimedListing": {
-          "title": "Claimed Listing Only",
-          "type": "boolean",
-          "default": true,
-          "description": "Only active businesses that claimed their Google listing"
-        }
-      }
+    "claimedListing": {
+      "title": "Only claimed/verified listings",
+      "type": "boolean",
+      "description": "Only active businesses that claimed their Google listing",
+      "default": false
+    },
+    "hasSocialMedia": {
+      "title": "Must have social media profiles",
+      "type": "boolean",
+      "description": "Only include businesses with LinkedIn/Facebook/Twitter profiles",
+      "default": false
     },
 
-    "enrichment": {
-      "title": "Data Enrichment Options",
-      "type": "object",
-      "description": "Additional data to enrich leads with (increases compute cost but improves lead quality)",
-      "editor": "json",
-      "default": {
-        "extractEmails": true,
-        "validateContacts": false,
-        "findDecisionMakers": false,
-        "enrichFirmographics": false
-      },
-      "prefill": {
-        "extractEmails": true,
-        "validateContacts": false,
-        "findDecisionMakers": false,
-        "enrichFirmographics": false
-      },
-      "properties": {
-        "extractEmails": {
-          "title": "Extract Emails from Websites",
-          "type": "boolean",
-          "default": true,
-          "description": "Visit websites and extract contact emails (adds ~0.01 CU/lead)"
-        },
-        "validateContacts": {
-          "title": "Validate Email/Phone",
-          "type": "boolean",
-          "default": false,
-          "description": "Verify email deliverability and phone validity (adds ~0.01 CU/lead)"
-        },
-        "companyData": {
-          "title": "Enrich Company Data",
-          "type": "boolean",
-          "default": false,
-          "description": "Add employee count, revenue, industry, funding info (adds ~0.02 CU/lead)"
-        },
-        "techStack": {
-          "title": "Detect Technology Stack",
-          "type": "boolean",
-          "default": false,
-          "description": "Identify CRM, marketing tools, hosting provider (adds ~0.01 CU/lead)"
-        },
-        "findDecisionMakers": {
-          "title": "Find Decision Makers",
-          "type": "boolean",
-          "default": false,
-          "description": "Search for CEO, CTO, CMO contacts on LinkedIn (adds ~0.03 CU/lead)"
-        },
-        "extractReviews": {
-          "title": "Extract Reviews",
-          "type": "boolean",
-          "default": false,
-          "description": "Extract customer reviews for sentiment analysis (adds ~0.01 CU/lead)"
-        },
-        "maxReviewsPerPlace": {
-          "title": "Max Reviews Per Place",
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 100,
-          "default": 10,
-          "description": "Number of reviews to extract per business (0 = disabled)"
-        }
-      }
+    "extractEmails": {
+      "title": "Extract emails from websites",
+      "type": "boolean",
+      "description": "Visit websites and extract contact emails (adds ~$0.01 per lead). Requires 'Scrape places with website' enabled.",
+      "default": true
+    },
+    "extractReviews": {
+      "title": "Extract customer reviews",
+      "type": "boolean",
+      "description": "Extract customer reviews for sentiment analysis (adds ~$0.02 per lead)",
+      "default": false
+    },
+    "maxReviewsPerPlace": {
+      "title": "Max reviews per place",
+      "type": "integer",
+      "description": "Number of reviews to extract per business (0 = disabled, max 100)",
+      "minimum": 0,
+      "maximum": 100,
+      "default": 10
     },
 
-    "scoring": {
-      "title": "Lead Scoring Configuration",
-      "type": "object",
-      "description": "Calculate lead quality scores (A+ to F) based on your ideal customer profile",
-      "editor": "json",
-      "default": {
-        "enableScoring": true,
-        "idealCustomerProfile": {
-          "industries": {
-            "technology": 30,
-            "professional_services": 25,
-            "healthcare": 20,
-            "manufacturing": 15,
-            "retail": 10
-          },
-          "locations": {
-            "North America": 30,
-            "Europe": 25,
-            "APAC": 20,
-            "Other": 10
-          }
-        }
-      },
-      "prefill": {
-        "enableScoring": true,
-        "idealCustomerProfile": {
-          "industries": {
-            "technology": 30,
-            "professional_services": 25,
-            "healthcare": 20,
-            "manufacturing": 15,
-            "retail": 10
-          },
-          "locations": {
-            "North America": 30,
-            "Europe": 25,
-            "APAC": 20,
-            "Other": 10
-          }
-        }
-      },
-      "properties": {
-        "enableScoring": {
-          "title": "Enable Lead Scoring",
-          "type": "boolean",
-          "default": true,
-          "description": "Score leads A+ to F based on quality signals"
-        },
-        "idealCustomerProfile": {
-          "title": "Ideal Customer Profile (ICP)",
-          "type": "object",
-          "description": "Define scoring weights for your perfect customer",
-          "editor": "json",
-          "default": {
-            "industries": {
-              "technology": 30,
-              "professional_services": 25,
-              "healthcare": 20,
-              "manufacturing": 15,
-              "retail": 10
-            },
-            "locations": {
-              "North America": 30,
-              "Europe": 25,
-              "APAC": 20,
-              "Other": 10
-            }
-          }
-        }
-      }
+    "enableScoring": {
+      "title": "Enable AI Lead Scoring (A+ to F)",
+      "type": "boolean",
+      "description": "Score leads based on data quality, engagement signals, and ICP fit. Scores: A+ (90+), A (80+), B (70+), C (60+), D (50+), F (<50)",
+      "default": true
+    },
+    "targetIndustries": {
+      "title": "Target industries for scoring (optional)",
+      "type": "array",
+      "description": "Industries to prioritize in lead scoring (e.g., 'technology', 'healthcare', 'professional_services'). Leave empty to score all equally.",
+      "editor": "stringList",
+      "default": ["technology", "professional_services"],
+      "example": ["technology", "healthcare", "professional_services"]
     },
 
-    "output": {
-      "title": "Output & Integration Options",
-      "type": "object",
-      "description": "Configure how results are delivered",
-      "editor": "json",
-      "default": {
-        "format": "json",
-        "deduplicate": true,
-        "webhookUrl": null
-      },
-      "prefill": {
-        "format": "json",
-        "deduplicate": true,
-        "webhookUrl": null
-      },
-      "properties": {
-        "format": {
-          "title": "Export Format",
-          "type": "string",
-          "enum": ["json", "csv", "xlsx"],
-          "default": "csv",
-          "description": "Format for downloaded results"
-        },
-        "webhook": {
-          "title": "Webhook URL (Optional)",
-          "type": "string",
-          "editor": "textfield",
-          "pattern": "^https?://.*",
-          "description": "POST results to this URL when actor finishes (for Zapier, Make.com, etc)"
-        }
-      }
+    "webhookUrl": {
+      "title": "Webhook URL (optional)",
+      "type": "string",
+      "description": "POST results to this URL when actor finishes (for Zapier, Make.com, n8n, etc)",
+      "editor": "textfield",
+      "pattern": "^https?://.*"
     },
 
     "proxy": {
@@ -293,20 +137,13 @@
     },
 
     "maxConcurrency": {
-      "title": "Max Concurrency",
+      "title": "Max Concurrency (Advanced)",
       "type": "integer",
-      "description": "Maximum concurrent requests (higher = faster but more compute cost)",
+      "description": "Maximum concurrent browser instances. Default is 5. Lower this to 2-3 if you experience memory issues.",
       "minimum": 1,
-      "maximum": 20,
+      "maximum": 10,
       "default": 5
-    },
-
-    "fastMode": {
-      "title": "Fast Mode (Listing Page Only)",
-      "type": "boolean",
-      "description": "Skip detail pages for 10x faster scraping. Returns: name, rating, reviews, Google Maps URL only. Disable for full details (website, phone, email).",
-      "default": true
     }
   },
-  "required": ["searchQueries"]
+  "required": ["searchQuery", "location"]
 }
