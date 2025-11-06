@@ -32,6 +32,16 @@ export const extractEmailFromWebsite = async (websiteUrl) => {
         'sentry.io',
         'gravatar.com',
         'w3.org',
+        'placeholder.com',
+        'yourcompany.com',
+        'companyname.com',
+        'schema.org',
+        'javascript:',
+        'mailto:',
+        '.png',
+        '.jpg',
+        '.gif',
+        '.svg',
     ];
 
     const crawler = new CheerioCrawler({
@@ -53,16 +63,36 @@ export const extractEmailFromWebsite = async (websiteUrl) => {
                 const pageText = $('body').text();
 
                 // Find all email addresses
-                const emails = pageText.match(emailRegex);
+                const rawEmails = pageText.match(emailRegex);
 
-                if (emails && emails.length > 0) {
-                    // Filter out blacklisted domains
-                    const validEmails = emails.filter((email) => {
-                        const domain = email.split('@')[1]?.toLowerCase();
-                        return !blacklistedDomains.some((blacklisted) => domain?.includes(blacklisted));
-                    });
+                if (rawEmails && rawEmails.length > 0) {
+                    // Clean and validate emails
+                    const cleanedEmails = rawEmails
+                        .map((email) => {
+                            // Remove any non-email characters at start/end
+                            // Match ONLY the valid email part
+                            const cleanMatch = email.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+                            return cleanMatch ? cleanMatch[0] : null;
+                        })
+                        .filter((email) => {
+                            if (!email) return false;
 
-                    if (validEmails.length > 0) {
+                            // Validate email format
+                            const parts = email.split('@');
+                            if (parts.length !== 2) return false;
+
+                            const [localPart, domain] = parts;
+
+                            // Basic validation
+                            if (!localPart || !domain) return false;
+                            if (localPart.length > 64 || domain.length > 255) return false;
+
+                            // Filter out blacklisted domains
+                            const domainLower = domain.toLowerCase();
+                            return !blacklistedDomains.some((blacklisted) => domainLower.includes(blacklisted));
+                        });
+
+                    if (cleanedEmails.length > 0) {
                         // Prioritize certain email prefixes (more likely to be contact emails)
                         const priorityPrefixes = [
                             'info@',
@@ -74,11 +104,11 @@ export const extractEmailFromWebsite = async (websiteUrl) => {
                             'office@',
                         ];
 
-                        const priorityEmail = validEmails.find((email) =>
+                        const priorityEmail = cleanedEmails.find((email) =>
                             priorityPrefixes.some((prefix) => email.toLowerCase().startsWith(prefix))
                         );
 
-                        foundEmail = priorityEmail || validEmails[0];
+                        foundEmail = priorityEmail || cleanedEmails[0];
 
                         console.log(`📧 Found email: ${foundEmail} on ${request.url}`);
                         return; // Stop crawling

@@ -120,10 +120,15 @@ try {
                     if (input.enrichment?.extractEmails && lead.website) {
                         console.log(`📧 Extracting email from ${lead.website}`);
                         const email = await extractEmailFromWebsite(lead.website);
-                        if (email) {
-                            enrichedLead.email = email;
+                        // Only set email if we got a valid string (not null, undefined, or empty)
+                        if (email && typeof email === 'string' && email.trim()) {
+                            enrichedLead.email = email.trim();
                             stats.emailsFound++;
+                        } else {
+                            enrichedLead.email = null; // Explicitly set to null if not found
                         }
+                    } else {
+                        enrichedLead.email = null; // No email extraction enabled or no website
                     }
 
                     // Contact validation (if enabled)
