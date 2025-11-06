@@ -77,7 +77,7 @@ export const scrapeGoogleMaps = async ({
                     // Extract visible business cards with updated selectors
                     const extractionResult = await page.evaluate(() => {
                         const cards = [];
-                        const debug = { selectors: {}, errors: [] };
+                        const debug = { selectors: {}, errors: [], reviewExtractionStats: {} };
 
                         // Find all business listing containers in the feed
                         const feed = document.querySelector('[role="feed"]');
@@ -150,13 +150,68 @@ export const scrapeGoogleMaps = async ({
                                     if (match) rating = parseFloat(match[1]);
                                 }
 
-                                // Extract review count
+                                // Extract review count with multiple fallback strategies
                                 let reviewCount = 0;
-                                const reviewEl = container.querySelector('span[aria-label*="review"]');
+                                let reviewStrategy = null;
+
+                                // Strategy 1: Look for aria-label with "review"
+                                let reviewEl = container.querySelector('span[aria-label*="review"]') ||
+                                              container.querySelector('button[aria-label*="review"]');
+
                                 if (reviewEl) {
                                     const reviewText = reviewEl.getAttribute('aria-label') || '';
                                     const match = reviewText.match(/(\d+)/);
-                                    if (match) reviewCount = parseInt(match[1]);
+                                    if (match) {
+                                        reviewCount = parseInt(match[1]);
+                                        reviewStrategy = 'aria-label';
+                                    }
+                                }
+
+                                // Strategy 2: Look for text content with parentheses (e.g., "(123)")
+                                if (reviewCount === 0) {
+                                    const allText = container.textContent || '';
+                                    const parenMatch = allText.match(/\((\d+)\)/);
+                                    if (parenMatch) {
+                                        reviewCount = parseInt(parenMatch[1]);
+                                        reviewStrategy = 'parentheses';
+                                    }
+                                }
+
+                                // Strategy 3: Look for rating element siblings
+                                if (reviewCount === 0 && ratingEl) {
+                                    const parent = ratingEl.parentElement;
+                                    if (parent) {
+                                        const siblingText = parent.textContent || '';
+                                        const numMatch = siblingText.match(/(\d+)\s*reviews?/i);
+                                        if (numMatch) {
+                                            reviewCount = parseInt(numMatch[1]);
+                                            reviewStrategy = 'rating-sibling';
+                                        }
+                                    }
+                                }
+
+                                // Strategy 4: Look for span with review numbers next to rating
+                                if (reviewCount === 0) {
+                                    const spans = container.querySelectorAll('span');
+                                    for (const span of spans) {
+                                        const text = span.textContent?.trim() || '';
+                                        // Match patterns like "123 reviews" or just "(123)"
+                                        if (/^\(?\d+\)?$/.test(text) && text.length <= 6) {
+                                            const num = parseInt(text.replace(/[()]/g, ''));
+                                            if (num > 0 && num < 1000000) { // Sanity check
+                                                reviewCount = num;
+                                                reviewStrategy = 'span-number';
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Track which strategies work
+                                if (reviewStrategy) {
+                                    debug.reviewExtractionStats[reviewStrategy] = (debug.reviewExtractionStats[reviewStrategy] || 0) + 1;
+                                } else {
+                                    debug.reviewExtractionStats['failed'] = (debug.reviewExtractionStats['failed'] || 0) + 1;
                                 }
 
                                 if (name && href) {
