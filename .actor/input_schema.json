@@ -264,11 +264,11 @@
     "proxy": {
       "title": "Proxy Configuration",
       "type": "object",
-      "description": "Proxy settings for scraping. SHADER (datacenter) proxies are fast, reliable, and cost-effective for Google Maps.",
+      "description": "Proxy settings for scraping. Enable proxies if you get blocked by Google (requires paid Apify plan with proxy access).",
       "editor": "proxy",
       "default": {
-        "useApifyProxy": true,
-        "apifyProxyGroups": ["SHADER"]
+        "useApifyProxy": false,
+        "apifyProxyGroups": []
       }
     },
 
