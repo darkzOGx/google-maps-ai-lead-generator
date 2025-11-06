@@ -231,11 +231,10 @@
     "proxy": {
       "title": "Proxy Configuration",
       "type": "object",
-      "description": "Proxy settings for scraping (SHADER datacenter proxies are faster and more reliable than RESIDENTIAL)",
+      "description": "Proxy settings for scraping. Try without proxies first (faster). Use RESIDENTIAL or BUYPROXIES if you get blocked by Google.",
       "editor": "proxy",
       "default": {
-        "useApifyProxy": true,
-        "apifyProxyGroups": ["SHADER"]
+        "useApifyProxy": false
       }
     },
 
