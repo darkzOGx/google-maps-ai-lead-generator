@@ -1,5 +1,5 @@
 import { Actor } from 'apify';
-import { PuppeteerCrawler, CheerioCrawler } from 'crawlee';
+import { PuppeteerCrawler } from 'crawlee';
 
 /**
  * Scrape Google Maps for business listings
@@ -39,15 +39,39 @@ export const scrapeGoogleMaps = async ({
 
     const crawler = new PuppeteerCrawler({
         proxyConfiguration,
-        maxConcurrency,
+        maxConcurrency: Math.min(maxConcurrency, 3), // Lower concurrency to avoid rate limits
         maxRequestRetries: 3,
         requestHandlerTimeoutSecs: 120,
 
         launchContext: {
             launchOptions: {
                 headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox'],
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-dev-shm-usage',
+                    '--disable-web-security',
+                    '--disable-features=IsolateOrigins,site-per-process',
+                ],
             },
+            useChrome: true, // Use full Chrome instead of Chromium
+        },
+
+        // Set realistic browser context
+        async preNavigationHooks({ page, request }) {
+            // Set realistic viewport
+            await page.setViewport({ width: 1920, height: 1080 });
+
+            // Set realistic user agent
+            await page.setUserAgent(
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            );
+
+            // Remove webdriver flag
+            await page.evaluateOnNewDocument(() => {
+                Object.defineProperty(navigator, 'webdriver', { get: () => false });
+            });
         },
 
         async requestHandler({ page, request }) {
@@ -57,6 +81,11 @@ export const scrapeGoogleMaps = async ({
             if (!request.label || request.label === 'SEARCH') {
                 // This is the main search page
                 try {
+                    // Wait for page to fully load
+                    await page.waitForNetworkIdle({ timeout: 15000 }).catch(() => {
+                        console.log('⏳ Network not idle after 15s, continuing anyway...');
+                    });
+
                     // Wait for results to load
                     await page.waitForSelector('[role="feed"]', { timeout: 30000 });
                     console.log('✅ Google Maps results loaded');
@@ -339,6 +368,22 @@ export const scrapeGoogleMaps = async ({
                         error: error.message,
                         url: request.url,
                     });
+
+                    // Diagnostic: Check what's on the page
+                    try {
+                        const pageTitle = await page.title();
+                        const pageUrl = page.url();
+                        console.log(`🔍 Page diagnostics: title="${pageTitle}", url="${pageUrl}"`);
+
+                        // Check for common Google block messages
+                        const bodyText = await page.evaluate(() => document.body.innerText);
+                        if (bodyText.includes('unusual traffic') || bodyText.includes('CAPTCHA') || bodyText.includes('detected automated queries')) {
+                            console.error('🚫 DETECTED: Google is showing a bot detection page!');
+                        }
+                    } catch (diagError) {
+                        console.log('⚠️ Could not get page diagnostics');
+                    }
+
                     throw error;
                 }
             }
@@ -354,59 +399,98 @@ export const scrapeGoogleMaps = async ({
     // Run the Puppeteer crawler to get listing cards
     await crawler.run([searchUrl]);
 
-    console.log(`📋 Collected ${leads.length} business cards, now fetching details with HTTP requests...`);
+    console.log(`📋 Collected ${leads.length} business cards, now fetching details with browsers (lower concurrency)...`);
 
-    // Now use CheerioCrawler (HTTP only, no browser) to fetch detail pages
+    // Now fetch detail pages with Puppeteer (JS needed for Google Maps)
+    // Use LOWER concurrency (2-3 browsers) to prevent CPU overload
     const detailedLeads = [];
 
-    const cheerioCrawler = new CheerioCrawler({
-        maxConcurrency: maxConcurrency * 2, // Can handle more since no browsers
+    const detailCrawler = new PuppeteerCrawler({
+        proxyConfiguration,
+        maxConcurrency: 2, // VERY LOW to prevent CPU overload
         maxRequestRetries: 2,
-        requestHandlerTimeoutSecs: 30,
+        requestHandlerTimeoutSecs: 60,
 
-        async requestHandler({ $, request }) {
+        launchContext: {
+            launchOptions: {
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-dev-shm-usage',
+                ],
+            },
+            useChrome: true,
+        },
+
+        // Same anti-bot measures
+        async preNavigationHooks({ page }) {
+            await page.setViewport({ width: 1920, height: 1080 });
+            await page.setUserAgent(
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            );
+            await page.evaluateOnNewDocument(() => {
+                Object.defineProperty(navigator, 'webdriver', { get: () => false });
+            });
+        },
+
+        async requestHandler({ page, request }) {
             const leadData = request.userData;
             console.log(`🔍 Fetching details: ${leadData.businessName}`);
 
             try {
+                // Wait for page to load
+                await page.waitForNetworkIdle({ timeout: 10000 }).catch(() => {});
+
                 // Extract phone number
-                const phoneButtons = $('button[aria-label*="Phone"]');
                 let phone = null;
-                phoneButtons.each((_, el) => {
-                    const ariaLabel = $(el).attr('aria-label');
-                    if (ariaLabel) {
-                        const match = ariaLabel.match(/[\d\s\(\)\-\+]+/);
+                try {
+                    const phoneButton = await page.$('button[data-item-id*="phone"]');
+                    if (phoneButton) {
+                        const ariaLabel = await phoneButton.evaluate((el) => el.getAttribute('aria-label'));
+                        const match = ariaLabel?.match(/[\d\s\(\)\-\+]+/);
                         if (match) phone = match[0].trim();
                     }
-                });
+                } catch (e) {}
 
                 // Extract website
-                const websiteLink = $('a[data-item-id="authority"]');
-                const website = websiteLink.attr('href') || null;
+                let website = null;
+                try {
+                    const websiteLink = await page.$('a[data-item-id="authority"]');
+                    if (websiteLink) {
+                        website = await websiteLink.evaluate((el) => el.getAttribute('href'));
+                    }
+                } catch (e) {}
 
                 // Extract address
-                const addressButtons = $('button[data-item-id*="address"]');
                 let address = null;
-                addressButtons.each((_, el) => {
-                    const ariaLabel = $(el).attr('aria-label');
-                    if (ariaLabel) {
-                        address = ariaLabel.replace('Address: ', '').trim();
+                try {
+                    const addressButton = await page.$('button[data-item-id*="address"]');
+                    if (addressButton) {
+                        const ariaLabel = await addressButton.evaluate((el) => el.getAttribute('aria-label'));
+                        address = ariaLabel?.replace('Address: ', '').trim() || null;
                     }
-                });
+                } catch (e) {}
 
                 // Extract category
-                const categoryButton = $('button[jsaction*="category"]').first();
-                const category = categoryButton.text().trim() || null;
+                let category = null;
+                try {
+                    const categoryButton = await page.$('button[jsaction*="category"]');
+                    if (categoryButton) {
+                        category = await categoryButton.evaluate((el) => el.textContent?.trim());
+                    }
+                } catch (e) {}
 
                 // Check if listing is claimed
-                const claimed = $('[aria-label*="Claimed"]').length > 0;
+                const claimed = (await page.$('[aria-label*="Claimed"]')) !== null;
 
                 // Extract social media links
                 const socialLinks = {
-                    linkedin: $('a[href*="linkedin.com"]').attr('href') || null,
-                    facebook: $('a[href*="facebook.com"]').attr('href') || null,
-                    twitter: $('a[href*="twitter.com"]').attr('href') || null,
-                    instagram: $('a[href*="instagram.com"]').attr('href') || null,
+                    linkedin: await page.$eval('a[href*="linkedin.com"]', (el) => el.href).catch(() => null),
+                    facebook: await page.$eval('a[href*="facebook.com"]', (el) => el.href).catch(() => null),
+                    twitter: await page.$eval('a[href*="twitter.com"]', (el) => el.href).catch(() => null),
+                    instagram: await page.$eval('a[href*="instagram.com"]', (el) => el.href).catch(() => null),
                 };
 
                 // Create complete lead object
@@ -466,11 +550,11 @@ export const scrapeGoogleMaps = async ({
         },
 
         failedRequestHandler({ request, error }) {
-            console.warn(`⚠️ HTTP request failed for ${request.userData.businessName}: ${error.message}`);
+            console.warn(`⚠️ Request failed for ${request.userData.businessName}: ${error.message}`);
         },
     });
 
-    // Enqueue detail page URLs for Cheerio crawler
+    // Enqueue detail page URLs for detail crawler
     const detailRequests = leads.map((lead) => ({
         url: lead.googleMapsUrl,
         userData: {
@@ -480,7 +564,7 @@ export const scrapeGoogleMaps = async ({
         },
     }));
 
-    await cheerioCrawler.run(detailRequests);
+    await detailCrawler.run(detailRequests);
 
     console.log(`✅ Successfully scraped ${detailedLeads.length} businesses with full details`);
 
