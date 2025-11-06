@@ -53,10 +53,13 @@ export const scrapeGoogleMaps = async ({
         async requestHandler({ page, request }) {
             console.log(`🌐 Loading: ${request.url}`);
 
-            try {
-                // Wait for results to load
-                await page.waitForSelector('[role="feed"]', { timeout: 30000 });
-                console.log('✅ Google Maps results loaded');
+            // Handle different request types
+            if (!request.label || request.label === 'SEARCH') {
+                // This is the main search page
+                try {
+                    // Wait for results to load
+                    await page.waitForSelector('[role="feed"]', { timeout: 30000 });
+                    console.log('✅ Google Maps results loaded');
 
                 // Scroll to load more results (bypass 120-result limit)
                 let scrollAttempts = 0;
@@ -329,143 +332,141 @@ export const scrapeGoogleMaps = async ({
                     }
                 }
 
-                console.log(`✅ Collected ${leads.length} business cards, now fetching details...`);
+                console.log(`✅ Collected ${leads.length} business cards, now enqueuing detail pages...`);
 
-                // Now visit each business detail page to get full information
-                for (const [index, lead] of leads.entries()) {
-                    try {
-                        // Check if page is still connected, recreate if needed
-                        if (page.isClosed()) {
-                            console.log('⚠️ Page was closed, skipping detail fetch for', lead.businessName);
-                            continue;
-                        }
-
-                        // Add delay between requests to avoid rate limiting
-                        if (index > 0) {
-                            await page.waitForTimeout(1000 + Math.random() * 1000); // 1-2 second delay
-                        }
-
-                        // Navigate to business detail page with shorter timeout
-                        await page.goto(lead.googleMapsUrl, {
-                            waitUntil: 'domcontentloaded', // Less strict than networkidle2
-                            timeout: 20000
-                        });
-                        await page.waitForTimeout(1500);
-
-                        // Extract detailed information
-                        const details = await page.evaluate(() => {
-                            const getElementText = (selector) => {
-                                const el = document.querySelector(selector);
-                                return el?.textContent?.trim() || null;
-                            };
-
-                            const getButtonAriaLabel = (text) => {
-                                const button = Array.from(document.querySelectorAll('button')).find((btn) =>
-                                    btn.getAttribute('aria-label')?.includes(text)
-                                );
-                                return button?.getAttribute('aria-label') || null;
-                            };
-
-                            // Extract phone number
-                            const phoneLabel = getButtonAriaLabel('Phone:');
-                            const phone = phoneLabel?.match(/[\d\s\(\)\-\+]+/)?.[0]?.trim() || null;
-
-                            // Extract website
-                            const websiteLink = document.querySelector('a[data-item-id="authority"]');
-                            const website = websiteLink?.href || null;
-
-                            // Extract address
-                            const addressButton = Array.from(document.querySelectorAll('button')).find((btn) =>
-                                btn.getAttribute('data-item-id')?.includes('address')
-                            );
-                            const address = addressButton?.getAttribute('aria-label')?.replace('Address: ', '') || null;
-
-                            // Extract category
-                            const categoryButton = document.querySelector('button[jsaction*="category"]');
-                            const category = categoryButton?.textContent?.trim() || null;
-
-                            // Check if listing is claimed
-                            const claimed = document.querySelector('[aria-label*="Claimed"]') !== null;
-
-                            // Extract description
-                            const description = getElementText('[class*="description"]');
-
-                            // Extract hours (if available)
-                            const hoursButton = Array.from(document.querySelectorAll('button')).find((btn) =>
-                                btn.getAttribute('aria-label')?.includes('Hours')
-                            );
-                            const hours = hoursButton?.getAttribute('aria-label') || null;
-
-                            // Check for social media links
-                            const socialLinks = {
-                                linkedin: document.querySelector('a[href*="linkedin.com"]')?.href || null,
-                                facebook: document.querySelector('a[href*="facebook.com"]')?.href || null,
-                                twitter: document.querySelector('a[href*="twitter.com"]')?.href || null,
-                                instagram: document.querySelector('a[href*="instagram.com"]')?.href || null,
-                            };
-
-                            return {
-                                phone,
-                                website,
-                                address,
-                                category,
-                                claimed,
-                                description,
-                                hours,
-                                socialLinks,
-                            };
-                        });
-
-                        // Merge details into lead
-                        Object.assign(lead, details);
-
-                        // Apply additional filters
-                        let shouldInclude = true;
-
-                        if (filters.hasWebsite && !lead.website) {
-                            shouldInclude = false;
-                        }
-
-                        if (filters.claimedListing && !lead.claimed) {
-                            shouldInclude = false;
-                        }
-
-                        if (filters.hasSocialMedia) {
-                            const hasSocial = Object.values(lead.socialLinks).some((link) => link !== null);
-                            if (!hasSocial) shouldInclude = false;
-                        }
-
-                        // Mark for removal if doesn't meet criteria
-                        if (!shouldInclude) {
-                            lead._remove = true;
-                        }
-
-                        // Progress logging
-                        if ((index + 1) % 5 === 0) {
-                            console.log(`⏳ Fetched details for ${index + 1}/${leads.length} businesses`);
-                        }
-
-                    } catch (detailError) {
-                        console.warn(`⚠️ Failed to get details for ${lead.businessName}: ${detailError.message}`);
-
-                        // If browser disconnected, we can't continue with this page
-                        if (detailError.message?.includes('disconnected') ||
-                            detailError.message?.includes('closed') ||
-                            detailError.message?.includes('crashed')) {
-                            console.log('🔥 Browser issue detected, stopping detail fetch for remaining leads');
-                            break; // Stop trying to fetch more details
-                        }
-
-                        // For other errors, keep the lead with basic info and continue
-                    }
+                // Instead of navigating on the same page, enqueue each detail URL as a separate request
+                // This uses fresh browser instances and avoids crashes
+                for (const lead of leads) {
+                    await crawler.addRequests([{
+                        url: lead.googleMapsUrl,
+                        label: 'DETAIL',
+                        userData: {
+                            businessName: lead.businessName,
+                            rating: lead.rating,
+                            reviewCount: lead.reviewCount,
+                        },
+                    }]);
                 }
 
-            } catch (error) {
-                console.error('❌ Error during scraping', {
-                    error: error.message,
-                    url: request.url,
-                });
-                throw error;
+                console.log(`📤 Enqueued ${leads.length} detail page requests`);
+
+                } catch (error) {
+                    console.error('❌ Error during search scraping', {
+                        error: error.message,
+                        url: request.url,
+                    });
+                    throw error;
+                }
+
+            } else if (request.label === 'DETAIL') {
+                // Handle detail page extraction in fresh browser instance
+                console.log(`🔍 Fetching details for: ${request.userData.businessName}`);
+
+                try {
+                    // Wait for page to load
+                    await page.waitForTimeout(2000);
+
+                    // Extract detailed information
+                    const details = await page.evaluate(() => {
+                        const getElementText = (selector) => {
+                            const el = document.querySelector(selector);
+                            return el?.textContent?.trim() || null;
+                        };
+
+                        const getButtonAriaLabel = (text) => {
+                            const button = Array.from(document.querySelectorAll('button')).find((btn) =>
+                                btn.getAttribute('aria-label')?.includes(text)
+                            );
+                            return button?.getAttribute('aria-label') || null;
+                        };
+
+                        // Extract phone number
+                        const phoneLabel = getButtonAriaLabel('Phone:');
+                        const phone = phoneLabel?.match(/[\d\s\(\)\-\+]+/)?.[0]?.trim() || null;
+
+                        // Extract website
+                        const websiteLink = document.querySelector('a[data-item-id="authority"]');
+                        const website = websiteLink?.href || null;
+
+                        // Extract address
+                        const addressButton = Array.from(document.querySelectorAll('button')).find((btn) =>
+                            btn.getAttribute('data-item-id')?.includes('address')
+                        );
+                        const address = addressButton?.getAttribute('aria-label')?.replace('Address: ', '') || null;
+
+                        // Extract category
+                        const categoryButton = document.querySelector('button[jsaction*="category"]');
+                        const category = categoryButton?.textContent?.trim() || null;
+
+                        // Check if listing is claimed
+                        const claimed = document.querySelector('[aria-label*="Claimed"]') !== null;
+
+                        // Extract description
+                        const description = getElementText('[class*="description"]');
+
+                        // Extract hours (if available)
+                        const hoursButton = Array.from(document.querySelectorAll('button')).find((btn) =>
+                            btn.getAttribute('aria-label')?.includes('Hours')
+                        );
+                        const hours = hoursButton?.getAttribute('aria-label') || null;
+
+                        // Check for social media links
+                        const socialLinks = {
+                            linkedin: document.querySelector('a[href*="linkedin.com"]')?.href || null,
+                            facebook: document.querySelector('a[href*="facebook.com"]')?.href || null,
+                            twitter: document.querySelector('a[href*="twitter.com"]')?.href || null,
+                            instagram: document.querySelector('a[href*="instagram.com"]')?.href || null,
+                        };
+
+                        return {
+                            phone,
+                            website,
+                            address,
+                            category,
+                            claimed,
+                            description,
+                            hours,
+                            socialLinks,
+                        };
+                    });
+
+                    // Create complete lead object
+                    const lead = {
+                        businessName: request.userData.businessName,
+                        googleMapsUrl: request.url,
+                        rating: request.userData.rating,
+                        reviewCount: request.userData.reviewCount,
+                        ...details,
+                    };
+
+                    // Apply additional filters
+                    let shouldInclude = true;
+
+                    if (filters.hasWebsite && !lead.website) {
+                        shouldInclude = false;
+                    }
+
+                    if (filters.claimedListing && !lead.claimed) {
+                        shouldInclude = false;
+                    }
+
+                    if (filters.hasSocialMedia) {
+                        const hasSocial = Object.values(lead.socialLinks).some((link) => link !== null);
+                        if (!hasSocial) shouldInclude = false;
+                    }
+
+                    // Save lead if it passes filters
+                    if (shouldInclude) {
+                        leads.push(lead);
+                        console.log(`✅ Added lead: ${lead.businessName} (${lead.website || 'no website'})`);
+                    } else {
+                        console.log(`🚫 Filtered out: ${lead.businessName}`);
+                    }
+
+                } catch (detailError) {
+                    console.warn(`⚠️ Failed to get details for ${request.userData.businessName}: ${detailError.message}`);
+                    // Lead won't be added to dataset, but crawl continues
+                }
             }
         },
 
