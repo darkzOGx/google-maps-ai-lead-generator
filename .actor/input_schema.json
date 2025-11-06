@@ -26,14 +26,33 @@
         {
           "category": "marketing agencies",
           "location": "New York, NY",
-          "maxResults": 500
+          "maxResults": 500,
+          "language": "en"
         },
         {
           "category": "tech startups",
           "location": "Austin, TX",
-          "maxResults": 250
+          "maxResults": 250,
+          "language": "en"
         }
       ]
+    },
+
+    "language": {
+      "title": "Language",
+      "type": "string",
+      "description": "Language for Google Maps results (e.g., 'en' for English, 'es' for Spanish)",
+      "editor": "select",
+      "enum": ["en", "es", "fr", "de", "it", "pt", "ja", "zh", "ru", "ar"],
+      "enumTitles": ["English", "Spanish", "French", "German", "Italian", "Portuguese", "Japanese", "Chinese", "Russian", "Arabic"],
+      "default": "en"
+    },
+
+    "skipClosedPlaces": {
+      "title": "Skip Closed Places",
+      "type": "boolean",
+      "description": "Filter out permanently closed businesses",
+      "default": true
     },
 
     "filters": {
@@ -139,6 +158,20 @@
           "type": "boolean",
           "default": false,
           "description": "Search for CEO, CTO, CMO contacts on LinkedIn (adds ~0.03 CU/lead)"
+        },
+        "extractReviews": {
+          "title": "Extract Reviews",
+          "type": "boolean",
+          "default": false,
+          "description": "Extract customer reviews for sentiment analysis (adds ~0.01 CU/lead)"
+        },
+        "maxReviewsPerPlace": {
+          "title": "Max Reviews Per Place",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 10,
+          "description": "Number of reviews to extract per business (0 = disabled)"
         }
       }
     },
