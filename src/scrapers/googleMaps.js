@@ -510,35 +510,116 @@ export const scrapeGoogleMaps = async ({
                 // Wait for main info panel to appear
                 await page.waitForSelector('[role="main"]', { timeout: selectorTimeout }).catch(() => {});
 
-                // Extract phone number
+                // Extract phone number with multiple strategies
                 let phone = null;
                 try {
-                    const phoneButton = await page.$('button[data-item-id*="phone"]');
-                    if (phoneButton) {
+                    // Strategy 1: Try data-item-id containing "phone"
+                    let phoneButton = await page.$('button[data-item-id*="phone"]');
+
+                    // Strategy 2: Try aria-label containing "Phone"
+                    if (!phoneButton) {
+                        phoneButton = await page.$('button[aria-label*="Phone"]');
+                    }
+
+                    // Strategy 3: Search page text for phone number pattern
+                    if (!phoneButton) {
+                        phone = await page.evaluate(() => {
+                            const text = document.body.textContent || '';
+                            const phoneMatch = text.match(/\(\d{3}\)\s?\d{3}-\d{4}|\d{3}-\d{3}-\d{4}|\+\d{1,2}\s?\(\d{3}\)\s?\d{3}-\d{4}/);
+                            return phoneMatch ? phoneMatch[0] : null;
+                        });
+                    }
+
+                    // If found button, extract from aria-label
+                    if (phoneButton && !phone) {
                         const ariaLabel = await phoneButton.evaluate((el) => el.getAttribute('aria-label'));
                         const match = ariaLabel?.match(/[\d\s\(\)\-\+]+/);
                         if (match) phone = match[0].trim();
                     }
-                } catch (e) {}
 
-                // Extract website
+                    if (phone) {
+                        console.log(`📞 Found phone: ${phone}`);
+                    }
+                } catch (e) {
+                    console.warn(`⚠️ Phone extraction error: ${e.message}`);
+                }
+
+                // Extract website with multiple fallback strategies
                 let website = null;
                 try {
-                    const websiteLink = await page.$('a[data-item-id="authority"]');
+                    // Strategy 1: Try data-item-id="authority"
+                    let websiteLink = await page.$('a[data-item-id="authority"]');
+
+                    // Strategy 2: Try aria-label containing "Website"
+                    if (!websiteLink) {
+                        websiteLink = await page.$('a[aria-label*="Website"]');
+                    }
+
+                    // Strategy 3: Look for any link with website-like href
+                    if (!websiteLink) {
+                        websiteLink = await page.evaluateHandle(() => {
+                            const links = Array.from(document.querySelectorAll('a[href]'));
+                            return links.find(link => {
+                                const href = link.getAttribute('href') || '';
+                                const text = link.textContent || '';
+                                // Find links that look like websites (not google.com, not maps.google.com)
+                                return (href.startsWith('http') &&
+                                       !href.includes('google.com') &&
+                                       !href.includes('facebook.com') &&
+                                       !href.includes('instagram.com') &&
+                                       !href.includes('twitter.com') &&
+                                       !href.includes('linkedin.com')) ||
+                                       text.toLowerCase().includes('website');
+                            });
+                        });
+
+                        // Convert handle to element
+                        if (websiteLink && websiteLink.asElement) {
+                            websiteLink = websiteLink.asElement();
+                        }
+                    }
+
                     if (websiteLink) {
                         website = await websiteLink.evaluate((el) => el.getAttribute('href'));
+                        console.log(`🌐 Found website: ${website}`);
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.warn(`⚠️ Website extraction error: ${e.message}`);
+                }
 
-                // Extract address
+                // Extract address with multiple strategies
                 let address = null;
                 try {
-                    const addressButton = await page.$('button[data-item-id*="address"]');
-                    if (addressButton) {
+                    // Strategy 1: Try data-item-id containing "address"
+                    let addressButton = await page.$('button[data-item-id*="address"]');
+
+                    // Strategy 2: Try aria-label containing "Address"
+                    if (!addressButton) {
+                        addressButton = await page.$('button[aria-label*="Address"]');
+                    }
+
+                    // Strategy 3: Look for address pattern in text
+                    if (!addressButton) {
+                        address = await page.evaluate(() => {
+                            const text = document.body.textContent || '';
+                            // Match patterns like "123 Main St, City, State ZIP"
+                            const addressMatch = text.match(/\d+\s+[A-Za-z0-9\s,]+,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}/);
+                            return addressMatch ? addressMatch[0] : null;
+                        });
+                    }
+
+                    // If found button, extract from aria-label
+                    if (addressButton && !address) {
                         const ariaLabel = await addressButton.evaluate((el) => el.getAttribute('aria-label'));
                         address = ariaLabel?.replace('Address: ', '').trim() || null;
                     }
-                } catch (e) {}
+
+                    if (address) {
+                        console.log(`📍 Found address: ${address}`);
+                    }
+                } catch (e) {
+                    console.warn(`⚠️ Address extraction error: ${e.message}`);
+                }
 
                 // Extract category
                 let category = null;
