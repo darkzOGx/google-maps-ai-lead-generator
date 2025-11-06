@@ -40,24 +40,66 @@ try {
         startTime: new Date().toISOString(),
     };
 
-    // Process each search query
-    for (const [index, query] of input.searchQueries.entries()) {
-        console.log(`📍 Query ${index + 1}/${input.searchQueries.length}: "${query.category}" in "${query.location}"`);
+    // Fast mode: Process multiple queries in parallel for 2-3x speed boost
+    const fastMode = input.fastMode !== false; // Default true
 
-        try {
-            // Step 1: Scrape Google Maps
-            const rawLeads = await scrapeGoogleMaps({
-                category: query.category,
-                location: query.location,
-                maxResults: query.maxResults || 100,
-                filters: input.filters || {},
-                proxyConfig: input.proxy,
-                maxConcurrency: input.maxConcurrency || 5,
-                fastMode: input.fastMode || false,
-            });
+    if (fastMode && input.searchQueries.length > 1) {
+        console.log(`⚡ Fast mode: Processing ${input.searchQueries.length} queries in parallel`);
 
-            console.log(`✅ Found ${rawLeads.length} businesses from Google Maps`);
-            stats.totalLeads += rawLeads.length;
+        const queryPromises = input.searchQueries.map(async (query, index) => {
+            console.log(`📍 Query ${index + 1}/${input.searchQueries.length}: "${query.category}" in "${query.location}"`);
+
+            try {
+                const rawLeads = await scrapeGoogleMaps({
+                    category: query.category,
+                    location: query.location,
+                    maxResults: query.maxResults || 100,
+                    filters: input.filters || {},
+                    proxyConfig: input.proxy,
+                    maxConcurrency: input.maxConcurrency || 5,
+                    fastMode: true,
+                });
+
+                console.log(`✅ Query ${index + 1}: Found ${rawLeads.length} businesses`);
+                return rawLeads;
+            } catch (error) {
+                console.error(`❌ Query ${index + 1} failed:`, error.message);
+                return [];
+            }
+        });
+
+        const allResults = await Promise.all(queryPromises);
+        const allLeads = allResults.flat();
+
+        stats.totalLeads = allLeads.length;
+
+        // Save all leads at once
+        for (const lead of allLeads) {
+            lead.scrapedAt = new Date().toISOString();
+            await Actor.pushData(lead);
+        }
+
+        console.log(`🎉 Fast mode complete: ${stats.totalLeads} total leads from ${input.searchQueries.length} queries`);
+
+    } else {
+        // Regular mode or single query: Process sequentially
+        for (const [index, query] of input.searchQueries.entries()) {
+            console.log(`📍 Query ${index + 1}/${input.searchQueries.length}: "${query.category}" in "${query.location}"`);
+
+            try {
+                // Step 1: Scrape Google Maps
+                const rawLeads = await scrapeGoogleMaps({
+                    category: query.category,
+                    location: query.location,
+                    maxResults: query.maxResults || 100,
+                    filters: input.filters || {},
+                    proxyConfig: input.proxy,
+                    maxConcurrency: input.maxConcurrency || 5,
+                    fastMode: input.fastMode || false,
+                });
+
+                console.log(`✅ Found ${rawLeads.length} businesses from Google Maps`);
+                stats.totalLeads += rawLeads.length;
 
             // Step 2: Enrich each lead
             for (const [leadIndex, lead] of rawLeads.entries()) {
@@ -148,6 +190,7 @@ try {
 
         } catch (queryError) {
             console.error(`❌ Failed to process query: "${query.category}" in "${query.location}"`, queryError.message);
+        }
         }
     }
 

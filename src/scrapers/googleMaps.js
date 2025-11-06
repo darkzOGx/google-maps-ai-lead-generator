@@ -40,7 +40,8 @@ export const scrapeGoogleMaps = async ({
 
     const crawler = new PuppeteerCrawler({
         proxyConfiguration,
-        maxConcurrency: Math.min(maxConcurrency, 3), // Lower concurrency to avoid rate limits
+        // Fast mode: can be more aggressive since we're only doing listing pages
+        maxConcurrency: fastMode ? Math.min(maxConcurrency, 5) : Math.min(maxConcurrency, 3),
         maxRequestRetries: 3,
         requestHandlerTimeoutSecs: 120,
 
@@ -106,8 +107,8 @@ export const scrapeGoogleMaps = async ({
                         }
                     });
 
-                    // Wait for new content to load
-                    await page.waitForTimeout(2000);
+                    // Wait for new content to load (faster in fast mode)
+                    await page.waitForTimeout(fastMode ? 1000 : 2000);
 
                     // Extract visible business cards with updated selectors
                     const extractionResult = await page.evaluate(() => {
