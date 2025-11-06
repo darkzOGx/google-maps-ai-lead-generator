@@ -443,12 +443,20 @@ export const scrapeGoogleMaps = async ({
     // Use LOWER concurrency (2-3 browsers) to prevent CPU overload
     const detailedLeads = [];
 
+    // Adjust settings based on proxy usage
+    const usingProxies = proxyConfiguration !== undefined;
+    const detailSettings = usingProxies
+        ? { concurrency: 3, navTimeout: 20, handlerTimeout: 30, retries: 2 }
+        : { concurrency: 1, navTimeout: 45, handlerTimeout: 60, retries: 3 }; // No proxies = slower, more retries
+
+    console.log(`⚙️ Detail crawler settings: ${usingProxies ? 'WITH' : 'WITHOUT'} proxies (concurrency: ${detailSettings.concurrency}, timeout: ${detailSettings.navTimeout}s)`);
+
     const detailCrawler = new PuppeteerCrawler({
         proxyConfiguration,
-        maxConcurrency: 3, // Increased to 3 with SHADER (more stable than RESIDENTIAL)
-        maxRequestRetries: 2, // SHADER is more reliable, fewer retries needed
-        requestHandlerTimeoutSecs: 30, // Faster with SHADER
-        navigationTimeoutSecs: 20, // SHADER connects faster
+        maxConcurrency: detailSettings.concurrency,
+        maxRequestRetries: detailSettings.retries,
+        requestHandlerTimeoutSecs: detailSettings.handlerTimeout,
+        navigationTimeoutSecs: detailSettings.navTimeout,
 
         launchContext: {
             launchOptions: {
@@ -481,11 +489,14 @@ export const scrapeGoogleMaps = async ({
             console.log(`🔍 Fetching details: ${leadData.businessName}`);
 
             try {
-                // Wait for page to load (faster with SHADER proxies)
-                await page.waitForNetworkIdle({ timeout: 3000 }).catch(() => {});
+                // Wait for page to load (adjust based on proxy usage)
+                const networkIdleTimeout = usingProxies ? 3000 : 5000;
+                const selectorTimeout = usingProxies ? 5000 : 8000;
 
-                // Wait for main info panel to appear (faster with SHADER)
-                await page.waitForSelector('[role="main"]', { timeout: 5000 }).catch(() => {});
+                await page.waitForNetworkIdle({ timeout: networkIdleTimeout }).catch(() => {});
+
+                // Wait for main info panel to appear
+                await page.waitForSelector('[role="main"]', { timeout: selectorTimeout }).catch(() => {});
 
                 // Extract phone number
                 let phone = null;
