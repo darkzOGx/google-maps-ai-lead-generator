@@ -438,10 +438,10 @@ export const scrapeGoogleMaps = async ({
 
     const detailCrawler = new PuppeteerCrawler({
         proxyConfiguration,
-        maxConcurrency: 1, // Further reduced to 1 for stability
-        maxRequestRetries: 3, // Increased retries for network errors
-        requestHandlerTimeoutSecs: 45, // Increased slightly for reliability
-        navigationTimeoutSecs: 30, // Explicit navigation timeout
+        maxConcurrency: 3, // Increased to 3 with SHADER (more stable than RESIDENTIAL)
+        maxRequestRetries: 2, // SHADER is more reliable, fewer retries needed
+        requestHandlerTimeoutSecs: 30, // Faster with SHADER
+        navigationTimeoutSecs: 20, // SHADER connects faster
 
         launchContext: {
             launchOptions: {
@@ -474,11 +474,11 @@ export const scrapeGoogleMaps = async ({
             console.log(`🔍 Fetching details: ${leadData.businessName}`);
 
             try {
-                // Wait for page to load (shorter timeout for speed)
-                await page.waitForNetworkIdle({ timeout: 5000 }).catch(() => {});
+                // Wait for page to load (faster with SHADER proxies)
+                await page.waitForNetworkIdle({ timeout: 3000 }).catch(() => {});
 
-                // Wait for main info panel to appear
-                await page.waitForSelector('[role="main"]', { timeout: 8000 }).catch(() => {});
+                // Wait for main info panel to appear (faster with SHADER)
+                await page.waitForSelector('[role="main"]', { timeout: 5000 }).catch(() => {});
 
                 // Extract phone number
                 let phone = null;
