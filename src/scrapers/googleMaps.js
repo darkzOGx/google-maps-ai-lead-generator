@@ -182,19 +182,42 @@ export const scrapeGoogleMaps = async ({
                     console.log(`🔍 DIAGNOSTICS:`, JSON.stringify(extractionResult.debug, null, 2));
                     console.log(`📊 Found ${extractionResult.debug.totalElements} elements, extracted ${extractionResult.debug.cardsExtracted} cards`);
 
-                    // Add new unique businesses
-                    let addedCount = 0;
-                    for (const card of newBusinessCards) {
-                        if (!processedUrls.has(card.googleMapsUrl) && leads.length < maxResults) {
-                            // Apply initial filters
-                            if (filters.minRating && card.rating < filters.minRating) continue;
-                            if (filters.minReviews && card.reviewCount < filters.minReviews) continue;
-
-                            processedUrls.add(card.googleMapsUrl);
-                            leads.push(card);
-                            addedCount++;
+                    // Log sample cards for debugging
+                    if (newBusinessCards.length > 0) {
+                        console.log(`📋 Sample card 1:`, JSON.stringify(newBusinessCards[0], null, 2));
+                        if (newBusinessCards.length > 1) {
+                            console.log(`📋 Sample card 2:`, JSON.stringify(newBusinessCards[1], null, 2));
                         }
                     }
+
+                    // Add new unique businesses
+                    let addedCount = 0;
+                    let filteredOut = { noRating: 0, noReviews: 0, duplicate: 0 };
+
+                    for (const card of newBusinessCards) {
+                        if (processedUrls.has(card.googleMapsUrl)) {
+                            filteredOut.duplicate++;
+                            continue;
+                        }
+
+                        if (leads.length >= maxResults) break;
+
+                        // Apply initial filters with logging
+                        if (filters.minRating && (card.rating === null || card.rating < filters.minRating)) {
+                            filteredOut.noRating++;
+                            continue;
+                        }
+                        if (filters.minReviews && card.reviewCount < filters.minReviews) {
+                            filteredOut.noReviews++;
+                            continue;
+                        }
+
+                        processedUrls.add(card.googleMapsUrl);
+                        leads.push(card);
+                        addedCount++;
+                    }
+
+                    console.log(`🚫 Filtered out: ${JSON.stringify(filteredOut)}`);
 
                     scrollAttempts++;
                     console.log(
