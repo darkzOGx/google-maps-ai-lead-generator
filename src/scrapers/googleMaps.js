@@ -38,11 +38,15 @@ export const scrapeGoogleMaps = async ({
     if (proxyConfig?.useApifyProxy) {
         try {
             // Try user's preferred proxy groups first
+            const proxyGroups = (proxyConfig.apifyProxyGroups && proxyConfig.apifyProxyGroups.length > 0)
+                ? proxyConfig.apifyProxyGroups
+                : ['SHADER']; // Default to SHADER for best performance
+
             proxyConfiguration = await Actor.createProxyConfiguration({
-                groups: proxyConfig.apifyProxyGroups || ['RESIDENTIAL'],
+                groups: proxyGroups,
                 countryCode: proxyConfig.countryCode,
             });
-            console.log(`🔒 Using proxy groups: ${proxyConfig.apifyProxyGroups?.join(', ') || 'RESIDENTIAL'}`);
+            console.log(`🔒 Using proxy groups: ${proxyGroups.join(', ')}`);
         } catch (proxyError) {
             console.warn(`⚠️ Proxy setup failed: ${proxyError.message}`);
             // Fallback: Try without country restriction
