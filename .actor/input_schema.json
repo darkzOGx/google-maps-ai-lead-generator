@@ -42,18 +42,18 @@
       "description": "Filter businesses by quality signals to improve lead quality",
       "editor": "json",
       "default": {
-        "minRating": 4.0,
-        "minReviews": 10,
+        "minRating": 3.0,
+        "minReviews": 0,
         "hasWebsite": true,
         "hasSocialMedia": false,
-        "claimedListing": true
+        "claimedListing": false
       },
       "prefill": {
-        "minRating": 4.0,
-        "minReviews": 10,
+        "minRating": 3.0,
+        "minReviews": 0,
         "hasWebsite": true,
         "hasSocialMedia": false,
-        "claimedListing": true
+        "claimedListing": false
       },
       "properties": {
         "minRating": {
