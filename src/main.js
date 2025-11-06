@@ -53,6 +53,7 @@ try {
                 filters: input.filters || {},
                 proxyConfig: input.proxy,
                 maxConcurrency: input.maxConcurrency || 5,
+                fastMode: input.fastMode || false,
             });
 
             console.log(`✅ Found ${rawLeads.length} businesses from Google Maps`);

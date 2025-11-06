@@ -19,6 +19,7 @@ export const scrapeGoogleMaps = async ({
     filters = {},
     proxyConfig,
     maxConcurrency = 5,
+    fastMode = false, // Skip detail pages for 10x speed
 }) => {
     const leads = [];
     const processedUrls = new Set();
@@ -401,7 +402,16 @@ export const scrapeGoogleMaps = async ({
     // Run the Puppeteer crawler to get listing cards
     await crawler.run([searchUrl]);
 
-    console.log(`📋 Collected ${leads.length} business cards, now fetching details with browsers (lower concurrency)...`);
+    console.log(`📋 Collected ${leads.length} business cards`);
+
+    // FAST MODE: Skip detail pages and return listing data only
+    if (fastMode) {
+        console.log(`⚡ Fast mode enabled - skipping detail page extraction`);
+        console.log(`✅ Successfully scraped ${leads.length} businesses (fast mode)`);
+        return leads;
+    }
+
+    console.log(`🔍 Now fetching details with browsers (lower concurrency)...`);
 
     // Now fetch detail pages with Puppeteer (JS needed for Google Maps)
     // Use LOWER concurrency (2-3 browsers) to prevent CPU overload

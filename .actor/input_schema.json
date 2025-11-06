@@ -246,6 +246,13 @@
       "minimum": 1,
       "maximum": 20,
       "default": 5
+    },
+
+    "fastMode": {
+      "title": "Fast Mode (Listing Page Only)",
+      "type": "boolean",
+      "description": "Skip detail pages for 10x faster scraping. Returns: name, rating, reviews, Google Maps URL only. Enable for quick bulk scraping.",
+      "default": false
     }
   },
   "required": ["searchQueries"]
