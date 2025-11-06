@@ -3,6 +3,15 @@
   "type": "object",
   "schemaVersion": 1,
   "properties": {
+    "scrapingMode": {
+      "title": "Scraping Mode",
+      "type": "string",
+      "description": "Choose scraping speed vs data richness. Basic is 10x faster but only includes basic info (name, rating, reviews, Google Maps URL). Enriched includes website, phone, email, and AI scoring.",
+      "editor": "select",
+      "enum": ["basic", "enriched"],
+      "enumTitles": ["⚡ Basic (Fast) - 10x faster, basic data only", "🎯 Enriched (Slow) - Full contact info + AI scoring"],
+      "default": "enriched"
+    },
     "searchQuery": {
       "title": "Search term(s)",
       "type": "string",

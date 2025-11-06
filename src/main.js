@@ -13,6 +13,11 @@ try {
 
     console.log('📥 Input received:', JSON.stringify(rawInput, null, 2));
 
+    // Determine scraping mode
+    const scrapingMode = rawInput.scrapingMode || 'enriched';
+    const isBasicMode = scrapingMode === 'basic';
+    const isEnrichedMode = scrapingMode === 'enriched';
+
     // Transform new flat structure to internal format
     const input = {
         searchQueries: [
@@ -24,16 +29,16 @@ try {
         ],
         language: rawInput.language || 'en',
         skipClosedPlaces: rawInput.skipClosedPlaces !== false,
-        fastMode: false, // Always use full mode for email extraction
+        fastMode: isBasicMode, // Basic mode = fast (no detail pages), Enriched = slow (full scraping)
         filters: {
             minRating: rawInput.minRating || 0,
             minReviews: rawInput.minReviews || 0,
-            hasWebsite: rawInput.hasWebsite !== false,
+            hasWebsite: isEnrichedMode ? (rawInput.hasWebsite !== false) : false, // Only filter by website in enriched mode
             claimedListing: rawInput.claimedListing || false,
             hasSocialMedia: rawInput.hasSocialMedia || false,
         },
         enrichment: {
-            extractEmails: rawInput.extractEmails !== false,
+            extractEmails: isEnrichedMode && (rawInput.extractEmails !== false), // Only extract emails in enriched mode
             extractReviews: rawInput.extractReviews || false,
             maxReviewsPerPlace: rawInput.maxReviewsPerPlace || 10,
             validateContacts: false,
@@ -42,7 +47,7 @@ try {
             findDecisionMakers: false,
         },
         scoring: {
-            enableScoring: rawInput.enableScoring !== false,
+            enableScoring: isEnrichedMode && (rawInput.enableScoring !== false), // Only score in enriched mode
             idealCustomerProfile: {
                 industries: Array.isArray(rawInput.targetIndustries) && rawInput.targetIndustries.length > 0
                     ? Object.fromEntries(rawInput.targetIndustries.map((ind, idx) => [ind, 30 - (idx * 5)]))
@@ -73,6 +78,7 @@ try {
     };
 
     console.log('🚀 Starting B2B Lead Generation Actor');
+    console.log('Mode:', isBasicMode ? '⚡ BASIC (Fast)' : '🎯 ENRICHED (Slow)');
     console.log('Query:', input.searchQueries[0].category, 'in', input.searchQueries[0].location);
     console.log('Max results:', input.searchQueries[0].maxResults);
     console.log('Email extraction:', input.enrichment.extractEmails);

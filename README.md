@@ -207,10 +207,26 @@ Zazz,contact@zazz.io,5.0,30,85,A,Software company
 
 ## ⚙️ Quick Start Guide
 
+### 🎯 Choose Your Scraping Mode
+
+**⚡ Basic (Fast) Mode:**
+- 10x faster scraping speed
+- Basic data: name, rating, reviews, Google Maps URL
+- Perfect for building large lead lists quickly
+- Cost: $0.005 per lead (~$5 for 1,000 leads)
+
+**🎯 Enriched (Slow) Mode:** (Recommended)
+- Full contact information extraction
+- Includes: website, phone, email, address, social links
+- AI-powered lead scoring (A+ to F grades)
+- Perfect for sales-ready leads
+- Cost: $0.03 per lead (~$30 for 1,000 leads)
+
 ### 1. Basic Configuration (Most Popular)
 
 ```json
 {
+  "scrapingMode": "enriched",
   "searchQueries": [
     {
       "category": "software companies",
@@ -249,24 +265,20 @@ Zazz,contact@zazz.io,5.0,30,85,A,Software company
 }
 ```
 
-### 2. Fast Mode (10x Faster, Basic Data Only)
+### 2. Basic Mode (10x Faster, Basic Data Only)
 
 ```json
 {
-  "searchQueries": [
-    {
-      "category": "real estate agents",
-      "location": "Miami, FL",
-      "maxResults": 2000
-    }
-  ],
-  "fastMode": true,
-  "enrichment": {
-    "extractEmails": false
-  }
+  "scrapingMode": "basic",
+  "searchQuery": "real estate agents",
+  "location": "Miami, FL",
+  "maxResults": 2000,
+  "language": "en"
 }
 ```
 **Output:** Name, rating, reviews, Google Maps URL only (no website, phone, email)
+**Speed:** 2,000 leads in ~10 minutes
+**Cost:** ~$10 in compute units
 
 ### 3. Multi-Language Scraping
 
@@ -600,6 +612,18 @@ MIT License - Free to use and modify
 ---
 
 ## 🔄 Version History
+
+### v1.2.0 (2025-11-06) - Scraping Mode Selector
+**New Feature:**
+- ✅ **Scraping Mode selector** - Choose between Basic (fast) or Enriched (slow) at the top of input form
+- ✅ **Basic mode** - 10x faster scraping with basic data only (name, rating, reviews, URL)
+- ✅ **Enriched mode** - Full contact info + email extraction + AI scoring (recommended)
+- ✅ **Smart defaults** - Enrichment options auto-disabled in basic mode
+- ✅ **Clear cost visibility** - Each mode shows expected cost per lead
+
+**Performance:**
+- ✅ **Timeout fixes** - Increased timeouts to 60s navigation, 90s handler to reduce failures
+- ✅ **Better error handling** - Slow-loading pages now complete successfully
 
 ### v1.1.0 (2025-11-06) - Incremental Saving
 **Critical Fix:**
