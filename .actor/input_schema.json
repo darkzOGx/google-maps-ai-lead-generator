@@ -184,17 +184,37 @@
       "default": {
         "enableScoring": true,
         "idealCustomerProfile": {
-          "industries": ["Software", "Technology", "SaaS"],
-          "locations": ["San Francisco", "California"],
-          "minEmployees": 10
+          "industries": {
+            "technology": 30,
+            "professional_services": 25,
+            "healthcare": 20,
+            "manufacturing": 15,
+            "retail": 10
+          },
+          "locations": {
+            "North America": 30,
+            "Europe": 25,
+            "APAC": 20,
+            "Other": 10
+          }
         }
       },
       "prefill": {
         "enableScoring": true,
         "idealCustomerProfile": {
-          "industries": ["Software", "Technology", "SaaS"],
-          "locations": ["San Francisco", "California"],
-          "minEmployees": 10
+          "industries": {
+            "technology": 30,
+            "professional_services": 25,
+            "healthcare": 20,
+            "manufacturing": 15,
+            "retail": 10
+          },
+          "locations": {
+            "North America": 30,
+            "Europe": 25,
+            "APAC": 20,
+            "Other": 10
+          }
         }
       },
       "properties": {
