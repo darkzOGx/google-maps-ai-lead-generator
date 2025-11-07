@@ -73,10 +73,14 @@ export const calculateLeadScore = (lead, icp = {}) => {
         }
     }
 
-    // Social media presence (5 points)
+    // Social media presence (5 points) - only if social links exist
+    let hasSocialLinks = false;
     if (lead.socialLinks) {
         const socialCount = Object.values(lead.socialLinks).filter((link) => link !== null).length;
-        engagementScore += Math.min(socialCount * 1.25, 5); // Max 5 points
+        if (socialCount > 0) {
+            engagementScore += Math.min(socialCount * 1.25, 5); // Max 5 points
+            hasSocialLinks = true;
+        }
     }
 
     breakdown.engagement = engagementScore;
@@ -136,24 +140,30 @@ export const calculateLeadScore = (lead, icp = {}) => {
     breakdown.firmographic = firmographicScore;
     totalScore += firmographicScore;
 
+    // ===== NORMALIZE SCORE IF SOCIAL LINKS NOT AVAILABLE =====
+    // If no social links were found, adjust score so leads aren't penalized
+    // Max score: 100 (with social) or 95 (without social)
+    const maxPossibleScore = hasSocialLinks ? 100 : 95;
+    const normalizedScore = hasSocialLinks ? totalScore : (totalScore / maxPossibleScore) * 100;
+
     // ===== CALCULATE FINAL GRADE =====
     let grade;
-    if (totalScore >= 90) {
+    if (normalizedScore >= 90) {
         grade = 'A+';
-    } else if (totalScore >= 80) {
+    } else if (normalizedScore >= 80) {
         grade = 'A';
-    } else if (totalScore >= 70) {
+    } else if (normalizedScore >= 70) {
         grade = 'B';
-    } else if (totalScore >= 60) {
+    } else if (normalizedScore >= 60) {
         grade = 'C';
-    } else if (totalScore >= 50) {
+    } else if (normalizedScore >= 50) {
         grade = 'D';
     } else {
         grade = 'F';
     }
 
     return {
-        score: Math.round(totalScore),
+        score: Math.round(normalizedScore),
         grade,
         breakdown,
     };
