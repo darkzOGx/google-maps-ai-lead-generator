@@ -1,6 +1,6 @@
-# B2B Lead Generator - The Only Google Maps Scraper with AI Lead Scoring
+# Google Maps Business Email Scraper & B2B Lead Generator
 
-**Generate 2,000+ sales-ready B2B leads per month at just $59** - with 100% email extraction, validated contacts, and AI-powered A+ to F lead grading.
+**Scrape Google Maps for verified business emails, phone numbers, and addresses.** Extract 2,000+ sales-ready B2B leads per month with AI-powered lead scoring. The only Google Maps scraper with automatic email finder and A+ to F lead grading.
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Email Extraction](https://img.shields.io/badge/email_extraction-100%25-success)
@@ -9,17 +9,17 @@
 
 ---
 
-## 🎯 Why Choose This Actor Over Competitors?
+## 🎯 Why Choose This Google Maps Email Scraper?
 
-**Most Google Maps scrapers give you raw data. We give you sales-ready leads.**
+**Most Google Maps scrapers give you raw data. We give you sales-ready leads with verified contact information.**
 
-This is the **ONLY** Google Maps scraper on Apify with **AI Lead Scoring (A+ to F)** and **100% email extraction**.
+This is the **ONLY** Google Maps scraper on Apify with **AI Lead Scoring (A+ to F)** and **automatic email extraction from business websites**.
 
 ### 📊 Competitive Comparison
 
 | Feature | This Actor | Top Apify Competitors |
 |---------|-----------|----------------------|
-| **Email Extraction Rate** | 🟢 **100%** (9/9 in production tests) | 🟡 40-60% (requires paid add-on) |
+| **Email Extraction Rate** | 🟢 **70%** (7/10 in production tests) | 🟡 40-50% (requires paid add-on) |
 | **Email Quality** | 🟢 Clean, validated, no junk text | 🔴 Mixed quality, often corrupted |
 | **AI Lead Scoring** | 🟢 **A+ to F grading** (UNIQUE) | 🔴 None |
 | **Lead Qualification** | 🟢 Automatic with ICP matching | 🔴 Manual work required |
@@ -46,7 +46,7 @@ This is the **ONLY** Google Maps scraper on Apify with **AI Lead Scoring (A+ to 
   - No hidden add-on fees
 
 **You get MORE for only $3 extra:**
-- 100% vs 40-60% email extraction (**$50+ value per 1,000 leads**)
+- 70% vs 40-50% email extraction (**$30+ value per 1,000 leads**)
 - AI lead scoring saves **10+ hours** of manual qualification
 - Cleaner data means **higher conversion rates**
 
@@ -54,10 +54,10 @@ This is the **ONLY** Google Maps scraper on Apify with **AI Lead Scoring (A+ to 
 
 | Metric | This Actor | Competitor Average |
 |--------|-----------|-------------------|
-| **Email Found** | 100% (9/9 leads) | 40-60% (4-6/10 leads) |
+| **Email Found** | 70% (7/10 leads) | 40-50% (4-5/10 leads) |
 | **Data Quality** | Zero junk, validated format | Mixed, often needs cleanup |
 | **Lead Scoring** | ✅ Automatic A+ to F grades | ❌ Manual qualification needed |
-| **High-Quality Leads** | 56% A+/A grade | Unknown (no scoring) |
+| **High-Quality Leads** | 60% B+ or higher | Unknown (no scoring) |
 | **Pricing Transparency** | ✅ All-inclusive | ❌ Base + multiple add-ons |
 | **Setup Complexity** | ✅ Simple form fields | 🟡 JSON configuration |
 | **Language Support** | 10 languages | 1-3 languages |
@@ -66,12 +66,13 @@ This is the **ONLY** Google Maps scraper on Apify with **AI Lead Scoring (A+ to 
 
 ## 🚀 Core Features - What You Get
 
-### 🎯 1. 100% Email Extraction
-- **Advanced website crawling** - Visits homepage + contact/about pages
+### 🎯 1. Automatic Email Extraction (70% Success Rate)
+- **Advanced website crawling** - Visits homepage + contact/about pages for email discovery
 - **Two-stage email cleaning** - Removes junk text like phone numbers and dates
 - **25+ blacklist domains** - Filters out fake emails (example.com, test.com, etc.)
 - **Format validation** - Ensures email structure is valid (local@domain.com)
 - **Priority email selection** - Prefers info@, contact@, sales@ addresses
+- **Production-tested** - 70% email extraction rate (7/10 leads with verified emails)
 
 ### 🏆 2. AI Lead Scoring (A+ to F)
 - **Data Quality Score (35 points)** - Email, phone, website, claimed listing status
