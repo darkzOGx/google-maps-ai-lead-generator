@@ -523,26 +523,6 @@ export const scrapeGoogleMaps = async ({
                 // Wait for main info panel to appear
                 await page.waitForSelector('[role="main"]', { timeout: selectorTimeout }).catch(() => {});
 
-                // DEBUG: Log what elements are available on the page
-                const pageDebug = await page.evaluate(() => {
-                    const main = document.querySelector('[role="main"]');
-                    if (!main) return { error: 'No main element found' };
-
-                    return {
-                        buttonsWithDataItemId: Array.from(main.querySelectorAll('button[data-item-id]'))
-                            .map(b => b.getAttribute('data-item-id')).slice(0, 10),
-                        linksWithDataItemId: Array.from(main.querySelectorAll('a[data-item-id]'))
-                            .map(a => a.getAttribute('data-item-id')).slice(0, 10),
-                        buttonsWithAriaLabel: Array.from(main.querySelectorAll('button[aria-label]'))
-                            .map(b => b.getAttribute('aria-label')).slice(0, 10),
-                        linksWithAriaLabel: Array.from(main.querySelectorAll('a[aria-label]'))
-                            .map(a => a.getAttribute('aria-label')).slice(0, 10),
-                        allLinksHrefs: Array.from(main.querySelectorAll('a[href]'))
-                            .map(a => a.getAttribute('href')).filter(h => h && h.startsWith('http')).slice(0, 10),
-                    };
-                });
-                console.log('🔍 PAGE DEBUG:', JSON.stringify(pageDebug, null, 2));
-
                 // Extract phone number with multiple strategies
                 let phone = null;
                 try {
