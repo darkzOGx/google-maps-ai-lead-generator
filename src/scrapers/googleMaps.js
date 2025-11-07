@@ -682,18 +682,67 @@ export const scrapeGoogleMaps = async ({
                     claimed = true; // Likely claimed if they added full contact info
                 }
 
-                // Extract social media links
-                const socialLinks = {
-                    linkedin: await page.$eval('a[href*="linkedin.com"]', (el) => el.href).catch(() => null),
-                    facebook: await page.$eval('a[href*="facebook.com"]', (el) => el.href).catch(() => null),
-                    twitter: await page.$eval('a[href*="twitter.com"]', (el) => el.href).catch(() => null),
-                    instagram: await page.$eval('a[href*="instagram.com"]', (el) => el.href).catch(() => null),
-                };
+                // Extract social media links with improved selectors
+                const socialLinks = await page.evaluate(() => {
+                    const links = {
+                        linkedin: null,
+                        facebook: null,
+                        twitter: null,
+                        instagram: null,
+                    };
+
+                    // Method 1: Try standard <a> tags
+                    const allLinks = Array.from(document.querySelectorAll('a[href]'));
+
+                    for (const link of allLinks) {
+                        const href = link.href.toLowerCase();
+
+                        if (!links.linkedin && href.includes('linkedin.com')) {
+                            links.linkedin = link.href;
+                        }
+                        if (!links.facebook && (href.includes('facebook.com') || href.includes('fb.com'))) {
+                            links.facebook = link.href;
+                        }
+                        if (!links.twitter && (href.includes('twitter.com') || href.includes('x.com'))) {
+                            links.twitter = link.href;
+                        }
+                        if (!links.instagram && href.includes('instagram.com')) {
+                            links.instagram = link.href;
+                        }
+                    }
+
+                    // Method 2: Try buttons and aria-labels (Google Maps sometimes uses these)
+                    if (!links.facebook || !links.instagram || !links.twitter || !links.linkedin) {
+                        const buttons = Array.from(document.querySelectorAll('button[aria-label], a[aria-label]'));
+
+                        for (const btn of buttons) {
+                            const label = (btn.getAttribute('aria-label') || '').toLowerCase();
+                            const dataUrl = btn.getAttribute('data-url') || btn.getAttribute('href') || '';
+
+                            if (!links.facebook && (label.includes('facebook') || dataUrl.includes('facebook'))) {
+                                links.facebook = dataUrl || 'https://facebook.com'; // Placeholder
+                            }
+                            if (!links.instagram && (label.includes('instagram') || dataUrl.includes('instagram'))) {
+                                links.instagram = dataUrl || 'https://instagram.com';
+                            }
+                            if (!links.twitter && (label.includes('twitter') || label.includes('x.com') || dataUrl.includes('twitter'))) {
+                                links.twitter = dataUrl || 'https://twitter.com';
+                            }
+                            if (!links.linkedin && (label.includes('linkedin') || dataUrl.includes('linkedin'))) {
+                                links.linkedin = dataUrl || 'https://linkedin.com';
+                            }
+                        }
+                    }
+
+                    return links;
+                });
 
                 // Log social media extraction results
                 const socialCount = Object.values(socialLinks).filter(link => link !== null).length;
                 if (socialCount > 0) {
                     console.log(`🔗 Found ${socialCount} social links:`, socialLinks);
+                } else {
+                    console.log(`⚠️ No social media links found for ${leadData.businessName}`);
                 }
 
                 // Extract reviews if enabled
