@@ -526,29 +526,41 @@ export const scrapeGoogleMaps = async ({
                 // Extract phone number with multiple strategies
                 let phone = null;
                 try {
-                    // Strategy 1: Try data-item-id containing "phone"
-                    let phoneButton = await page.$('button[data-item-id*="phone"]');
+                    phone = await page.evaluate(() => {
+                        // Strategy 1: Look for phone in buttons/links with aria-label
+                        const buttons = Array.from(document.querySelectorAll('button, a, div'));
+                        for (const el of buttons) {
+                            const ariaLabel = el.getAttribute('aria-label') || '';
+                            const text = el.textContent || '';
 
-                    // Strategy 2: Try aria-label containing "Phone"
-                    if (!phoneButton) {
-                        phoneButton = await page.$('button[aria-label*="Phone"]');
-                    }
+                            // Check aria-label for phone
+                            if (ariaLabel.toLowerCase().includes('phone')) {
+                                const match = ariaLabel.match(/[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}/);
+                                if (match) return match[0];
+                            }
 
-                    // Strategy 3: Search page text for phone number pattern
-                    if (!phoneButton) {
-                        phone = await page.evaluate(() => {
-                            const text = document.body.textContent || '';
-                            const phoneMatch = text.match(/\(\d{3}\)\s?\d{3}-\d{4}|\d{3}-\d{3}-\d{4}|\+\d{1,2}\s?\(\d{3}\)\s?\d{3}-\d{4}/);
-                            return phoneMatch ? phoneMatch[0] : null;
-                        });
-                    }
+                            // Check text content for phone
+                            const phoneMatch = text.match(/[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4}/);
+                            if (phoneMatch && !text.includes('@')) { // exclude emails
+                                return phoneMatch[0];
+                            }
+                        }
 
-                    // If found button, extract from aria-label
-                    if (phoneButton && !phone) {
-                        const ariaLabel = await phoneButton.evaluate((el) => el.getAttribute('aria-label'));
-                        const match = ariaLabel?.match(/[\d\s\(\)\-\+]+/);
-                        if (match) phone = match[0].trim();
-                    }
+                        // Strategy 2: Search entire page for phone pattern
+                        const bodyText = document.body.textContent || '';
+                        const patterns = [
+                            /\(\d{3}\)\s?\d{3}-\d{4}/,  // (123) 456-7890
+                            /\d{3}-\d{3}-\d{4}/,        // 123-456-7890
+                            /\+\d{1,2}\s?\(\d{3}\)\s?\d{3}-\d{4}/  // +1 (123) 456-7890
+                        ];
+
+                        for (const pattern of patterns) {
+                            const match = bodyText.match(pattern);
+                            if (match) return match[0];
+                        }
+
+                        return null;
+                    });
 
                     if (phone) {
                         console.log(`📞 Found phone: ${phone}`);
@@ -560,40 +572,42 @@ export const scrapeGoogleMaps = async ({
                 // Extract website with multiple fallback strategies
                 let website = null;
                 try {
-                    // Strategy 1: Try data-item-id="authority"
-                    let websiteLink = await page.$('a[data-item-id="authority"]');
-
-                    // Strategy 2: Try aria-label containing "Website"
-                    if (!websiteLink) {
-                        websiteLink = await page.$('a[aria-label*="Website"]');
-                    }
-
-                    // Strategy 3: Look for any link with website-like href
-                    if (!websiteLink) {
-                        websiteLink = await page.evaluateHandle(() => {
-                            const links = Array.from(document.querySelectorAll('a[href]'));
-                            return links.find(link => {
-                                const href = link.getAttribute('href') || '';
-                                const text = link.textContent || '';
-                                // Find links that look like websites (not google.com, not maps.google.com)
-                                return (href.startsWith('http') &&
-                                       !href.includes('google.com') &&
-                                       !href.includes('facebook.com') &&
-                                       !href.includes('instagram.com') &&
-                                       !href.includes('twitter.com') &&
-                                       !href.includes('linkedin.com')) ||
-                                       text.toLowerCase().includes('website');
-                            });
-                        });
-
-                        // Convert handle to element
-                        if (websiteLink && websiteLink.asElement) {
-                            websiteLink = websiteLink.asElement();
+                    website = await page.evaluate(() => {
+                        // Strategy 1: Look for links in action buttons
+                        const buttons = Array.from(document.querySelectorAll('button, a'));
+                        for (const btn of buttons) {
+                            const ariaLabel = btn.getAttribute('aria-label') || '';
+                            if (ariaLabel.toLowerCase().includes('website')) {
+                                // Extract URL from onclick or href
+                                const href = btn.getAttribute('href') || btn.onclick?.toString() || '';
+                                const match = href.match(/https?:\/\/[^\s"']+/);
+                                if (match) return match[0];
+                            }
                         }
-                    }
 
-                    if (websiteLink) {
-                        website = await websiteLink.evaluate((el) => el.getAttribute('href'));
+                        // Strategy 2: Look for any external link (not google/social)
+                        const links = Array.from(document.querySelectorAll('a[href]'));
+                        for (const link of links) {
+                            const href = link.href || '';
+                            const text = (link.textContent || '').toLowerCase();
+
+                            // Skip social media and google links
+                            if (href.includes('google.com') || href.includes('facebook.com') ||
+                                href.includes('instagram.com') || href.includes('twitter.com') ||
+                                href.includes('linkedin.com') || href.includes('youtube.com')) {
+                                continue;
+                            }
+
+                            // Look for http links or text containing "website"
+                            if (href.startsWith('http') || text.includes('website')) {
+                                return href;
+                            }
+                        }
+
+                        return null;
+                    });
+
+                    if (website) {
                         console.log(`🌐 Found website: ${website}`);
                     }
                 } catch (e) {
@@ -603,29 +617,33 @@ export const scrapeGoogleMaps = async ({
                 // Extract address with multiple strategies
                 let address = null;
                 try {
-                    // Strategy 1: Try data-item-id containing "address"
-                    let addressButton = await page.$('button[data-item-id*="address"]');
+                    address = await page.evaluate(() => {
+                        // Strategy 1: Look for address in buttons with aria-label
+                        const buttons = Array.from(document.querySelectorAll('button, a, div'));
+                        for (const el of buttons) {
+                            const ariaLabel = el.getAttribute('aria-label') || '';
+                            if (ariaLabel.toLowerCase().includes('address')) {
+                                // Extract address from aria-label
+                                const addr = ariaLabel.replace(/address:\s*/i, '').trim();
+                                if (addr.length > 10) return addr;
+                            }
+                        }
 
-                    // Strategy 2: Try aria-label containing "Address"
-                    if (!addressButton) {
-                        addressButton = await page.$('button[aria-label*="Address"]');
-                    }
+                        // Strategy 2: Look for address patterns in page text
+                        const bodyText = document.body.textContent || '';
 
-                    // Strategy 3: Look for address pattern in text
-                    if (!addressButton) {
-                        address = await page.evaluate(() => {
-                            const text = document.body.textContent || '';
-                            // Match patterns like "123 Main St, City, State ZIP"
-                            const addressMatch = text.match(/\d+\s+[A-Za-z0-9\s,]+,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}/);
-                            return addressMatch ? addressMatch[0] : null;
-                        });
-                    }
+                        // Pattern 1: Street number + street name + city + state + ZIP
+                        const fullPattern = /\d+\s+[A-Za-z0-9\s\.#]+,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(-\d{4})?/;
+                        let match = bodyText.match(fullPattern);
+                        if (match) return match[0];
 
-                    // If found button, extract from aria-label
-                    if (addressButton && !address) {
-                        const ariaLabel = await addressButton.evaluate((el) => el.getAttribute('aria-label'));
-                        address = ariaLabel?.replace('Address: ', '').trim() || null;
-                    }
+                        // Pattern 2: Simplified pattern (street, city, state)
+                        const simplePattern = /\d+\s+[A-Za-z0-9\s\.#]+[,\s]+[A-Za-z\s]+[,\s]+[A-Z]{2}/;
+                        match = bodyText.match(simplePattern);
+                        if (match) return match[0];
+
+                        return null;
+                    });
 
                     if (address) {
                         console.log(`📍 Found address: ${address}`);
