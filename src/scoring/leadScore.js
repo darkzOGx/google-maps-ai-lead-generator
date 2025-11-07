@@ -137,6 +137,9 @@ export const calculateLeadScore = (lead, icp = {}) => {
         }
     }
 
+    // Cap firmographic score at 40 points max (industry 30 + location 30 can exceed 40)
+    firmographicScore = Math.min(firmographicScore, 40);
+
     breakdown.firmographic = firmographicScore;
     totalScore += firmographicScore;
 
@@ -146,26 +149,29 @@ export const calculateLeadScore = (lead, icp = {}) => {
     const maxPossibleScore = hasSocialLinks ? 100 : 95;
     const normalizedScore = hasSocialLinks ? totalScore : (totalScore / maxPossibleScore) * 100;
 
+    // Safety cap: ensure score never exceeds 100
+    const cappedScore = Math.min(normalizedScore, 100);
+
     // ===== CALCULATE FINAL GRADE =====
     // Adjusted thresholds for realistic B2B lead grading
     // Most quality leads with email+phone+website should score A or A+
     let grade;
-    if (normalizedScore >= 85) {
+    if (cappedScore >= 85) {
         grade = 'A+';
-    } else if (normalizedScore >= 75) {
+    } else if (cappedScore >= 75) {
         grade = 'A';
-    } else if (normalizedScore >= 65) {
+    } else if (cappedScore >= 65) {
         grade = 'B';
-    } else if (normalizedScore >= 55) {
+    } else if (cappedScore >= 55) {
         grade = 'C';
-    } else if (normalizedScore >= 45) {
+    } else if (cappedScore >= 45) {
         grade = 'D';
     } else {
         grade = 'F';
     }
 
     return {
-        score: Math.round(normalizedScore),
+        score: Math.round(cappedScore),
         grade,
         breakdown,
     };
