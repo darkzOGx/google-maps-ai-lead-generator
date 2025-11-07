@@ -2,7 +2,7 @@
   "title": "B2B Lead Generator - Input Configuration",
   "type": "object",
   "schemaVersion": 1,
-  "description": "⚠️ TIMEOUT: Scroll down to find timeout input fields. Enriched mode: ~150 leads/hour. 100 leads = 60 minutes, 500 leads = 4 hours, 1000 leads = 8 hours.",
+  "description": "⚠️ TIMEOUT: Scroll down to find 'Timeout (Seconds)' field. Enriched mode: ~150 leads/hour. 100 leads = 3600 sec, 500 leads = 14400 sec, 1000 leads = 28800 sec.",
   "properties": {
     "scrapingMode": {
       "title": "Scraping Mode",
@@ -45,7 +45,7 @@
     "maxResults": {
       "title": "Number of places to extract (per each search term or URL)",
       "type": "integer",
-      "description": "Maximum number of businesses to scrape. ⏱️ Set timeout below: 100 leads = 60 minutes, 500 leads = 4 hours, 1000 leads = 8 hours.",
+      "description": "Maximum number of businesses to scrape. ⏱️ Set timeout below: 100 leads = 3600 sec, 500 leads = 14400 sec, 1000 leads = 28800 sec.",
       "minimum": 1,
       "maximum": 10000,
       "default": 50,
@@ -141,23 +141,15 @@
       "example": ["technology", "healthcare", "professional_services"]
     },
 
-    "timeoutMinutes": {
-      "title": "⏱️ Timeout (Minutes)",
+    "timeoutSeconds": {
+      "title": "⏱️ Timeout (Seconds)",
       "type": "integer",
-      "description": "Run timeout in MINUTES. For 100 leads use 60 min, 500 leads use 240 min, 1000 leads use 480 min. Leave empty to use hours field.",
+      "description": "Run timeout in SECONDS. 100 leads = 3600 sec (1hr), 500 leads = 14400 sec (4hrs), 1000 leads = 28800 sec (8hrs).",
       "editor": "number",
-      "minimum": 1,
-      "maximum": 1440,
-      "example": 60
-    },
-    "timeoutHours": {
-      "title": "⏱️ Timeout (Hours)",
-      "type": "integer",
-      "description": "Run timeout in HOURS. For 100 leads use 1 hour, 500 leads use 4 hours, 1000 leads use 8 hours. Leave empty to use minutes field.",
-      "editor": "number",
-      "minimum": 1,
-      "maximum": 24,
-      "example": 4
+      "minimum": 60,
+      "maximum": 86400,
+      "default": 7200,
+      "example": 14400
     },
 
     "webhookUrl": {
