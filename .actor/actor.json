@@ -14,6 +14,11 @@
     "recommendedMemoryMbytes": 8192,
     "maxMemoryMbytes": 32768
   },
+  "defaultRunOptions": {
+    "build": "latest",
+    "timeoutSecs": 7200,
+    "memoryMbytes": 8192
+  },
   "storages": {
     "dataset": {
       "actorSpecification": 1,

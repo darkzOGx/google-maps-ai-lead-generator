@@ -124,6 +124,24 @@ Scrape Google Maps in **10 languages**:
 - **Proxy auto-selection** - Works with all Apify proxy tiers
 - **Backwards compatibility** - Supports both old and new ICP formats
 
+#### ⏱️ **Performance & Timeout Guide**
+**Enriched Mode** (with email extraction) processes **~150 leads per hour**:
+- Basic scraping: 10 sec/lead (Google Maps data)
+- Email extraction: 5-15 sec/lead (website crawling)
+- Lead scoring: <1 sec/lead (AI analysis)
+- **Total**: 15-25 seconds per enriched lead
+
+**⚠️ IMPORTANT:** Set timeout appropriately in **Run Options → Timeout**:
+
+| Target Leads | Recommended Timeout | Apify Compute Units |
+|--------------|-------------------|-------------------|
+| 50 leads | 30 minutes (1,800s) | ~$0.50 |
+| 100 leads | 1 hour (3,600s) | ~$1.00 |
+| 500 leads | 4 hours (14,400s) | ~$5.00 |
+| 1,000 leads | 8 hours (28,800s) | ~$10.00 |
+
+**Fast Mode** (basic data only) is **10x faster** at ~1,500 leads per hour.
+
 ### 💾 10. Incremental Data Saving
 - **Real-time saving** - Each lead saved immediately after enrichment
 - **No data loss** - If run is cancelled, all completed leads are preserved
