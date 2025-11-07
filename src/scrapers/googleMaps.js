@@ -66,9 +66,9 @@ export const scrapeGoogleMaps = async ({
         proxyConfiguration,
         // Respect user's performance preset choice (Balanced/Fast/Turbo)
         maxConcurrency: maxConcurrency,
-        maxRequestRetries: 3,
-        requestHandlerTimeoutSecs: 90, // Reduced from 120 for faster failures
-        navigationTimeoutSecs: 45, // Fail faster on navigation issues
+        maxRequestRetries: 5, // Increased for production reliability
+        requestHandlerTimeoutSecs: 60, // Production timeout for slow pages
+        navigationTimeoutSecs: 30, // Production navigation timeout
 
         launchContext: {
             launchOptions: {
@@ -469,9 +469,9 @@ export const scrapeGoogleMaps = async ({
 
     const detailSettings = {
         concurrency: detailConcurrencyValue,
-        navTimeout: 60,
-        handlerTimeout: 90,
-        retries: usingProxies ? 2 : 3
+        navTimeout: 30, // Consistent with main crawler
+        handlerTimeout: 60, // Consistent with main crawler
+        retries: 5 // Increased for production reliability
     };
 
     console.log(`⚙️ Detail crawler settings: ${usingProxies ? 'WITH' : 'WITHOUT'} proxies (concurrency: ${detailSettings.concurrency}, timeout: ${detailSettings.navTimeout}s)`);
