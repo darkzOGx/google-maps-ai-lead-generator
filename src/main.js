@@ -257,6 +257,9 @@ try {
         downloadFormats: ['csv', 'json', 'xlsx'],
     });
 
+    // Exit successfully
+    await Actor.exit();
+
 } catch (error) {
     console.error('💥 FATAL ERROR:', error);
     console.error('Error message:', error.message);
