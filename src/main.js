@@ -122,16 +122,27 @@ try {
                 enrichedLead.scrapedAt = new Date().toISOString();
                 enrichedLead.searchQuery = `${query.category} in ${query.location}`;
 
-                // Email extraction (if enabled and website exists)
+                // Email and social media extraction (if enabled and website exists)
                 if (input.enrichment?.extractEmails && lead.website) {
-                    console.log(`📧 Extracting email from ${lead.website}`);
-                    const email = await extractEmailFromWebsite(lead.website);
-                    // Only set email if we got a valid string (not null, undefined, or empty)
-                    if (email && typeof email === 'string' && email.trim()) {
-                        enrichedLead.email = email.trim();
+                    console.log(`📧 Extracting email and social links from ${lead.website}`);
+                    const result = await extractEmailFromWebsite(lead.website);
+
+                    // Set email if found
+                    if (result.email && typeof result.email === 'string' && result.email.trim()) {
+                        enrichedLead.email = result.email.trim();
                         stats.emailsFound++;
                     } else {
-                        enrichedLead.email = null; // Explicitly set to null if not found
+                        enrichedLead.email = null;
+                    }
+
+                    // Merge social links from website (prefer website links over Google Maps)
+                    if (result.socialLinks) {
+                        enrichedLead.socialLinks = {
+                            linkedin: result.socialLinks.linkedin || lead.socialLinks?.linkedin || null,
+                            facebook: result.socialLinks.facebook || lead.socialLinks?.facebook || null,
+                            twitter: result.socialLinks.twitter || lead.socialLinks?.twitter || null,
+                            instagram: result.socialLinks.instagram || lead.socialLinks?.instagram || null,
+                        };
                     }
                 } else {
                     enrichedLead.email = null; // No email extraction enabled or no website

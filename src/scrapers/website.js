@@ -2,12 +2,12 @@ import { Actor } from 'apify';
 import { CheerioCrawler } from 'crawlee';
 
 /**
- * Extract email addresses from a website
+ * Extract email addresses and social links from a website
  * @param {string} websiteUrl - URL of the website to scrape
- * @returns {Promise<string|null>} Email address or null if not found
+ * @returns {Promise<{email: string|null, socialLinks: Object}>} Email and social links or null if not found
  */
 export const extractEmailFromWebsite = async (websiteUrl) => {
-    if (!websiteUrl) return null;
+    if (!websiteUrl) return { email: null, socialLinks: { linkedin: null, facebook: null, twitter: null, instagram: null } };
 
     // PRODUCTION FIX: Add 30s timeout to prevent hanging
     const timeoutPromise = new Promise((_, reject) =>
@@ -24,12 +24,18 @@ export const extractEmailFromWebsite = async (websiteUrl) => {
         if (error.message.includes('timeout')) {
             console.log(`⏱️ Email extraction timed out for ${websiteUrl} (30s limit)`);
         }
-        return null;
+        return { email: null, socialLinks: { linkedin: null, facebook: null, twitter: null, instagram: null } };
     }
 };
 
 async function extractEmailWithCrawler(websiteUrl) {
     let foundEmail = null;
+    const foundSocialLinks = {
+        linkedin: null,
+        facebook: null,
+        twitter: null,
+        instagram: null,
+    };
     const visitedUrls = new Set();
     const maxPagesToVisit = 2; // Check homepage + 1 contact page (reduced for performance)
 
@@ -83,6 +89,28 @@ async function extractEmailWithCrawler(websiteUrl) {
             visitedUrls.add(request.url);
 
             try {
+                // Extract social media links from this page
+                const allLinks = $('a[href]');
+                allLinks.each((_, element) => {
+                    const href = $(element).attr('href');
+                    if (!href) return;
+
+                    const hrefLower = href.toLowerCase();
+
+                    if (!foundSocialLinks.linkedin && hrefLower.includes('linkedin.com')) {
+                        foundSocialLinks.linkedin = href;
+                    }
+                    if (!foundSocialLinks.facebook && (hrefLower.includes('facebook.com') || hrefLower.includes('fb.com'))) {
+                        foundSocialLinks.facebook = href;
+                    }
+                    if (!foundSocialLinks.twitter && (hrefLower.includes('twitter.com') || hrefLower.includes('x.com'))) {
+                        foundSocialLinks.twitter = href;
+                    }
+                    if (!foundSocialLinks.instagram && hrefLower.includes('instagram.com')) {
+                        foundSocialLinks.instagram = href;
+                    }
+                });
+
                 // Extract all text content from the page
                 const pageText = $('body').text();
 
@@ -203,7 +231,7 @@ async function extractEmailWithCrawler(websiteUrl) {
         try {
             await requestQueue.drop();
         } catch {}
-        return null;
+        return { email: null, socialLinks: foundSocialLinks };
     }
 
     // Cleanup request queue after use to prevent storage bloat
@@ -213,7 +241,13 @@ async function extractEmailWithCrawler(websiteUrl) {
         console.log(`⚠️ Failed to cleanup email queue ${queueId}: ${dropError.message}`);
     }
 
-    return foundEmail;
+    // Log found social links
+    const socialCount = Object.values(foundSocialLinks).filter(link => link !== null).length;
+    if (socialCount > 0) {
+        console.log(`🔗 Found ${socialCount} social links from website:`, foundSocialLinks);
+    }
+
+    return { email: foundEmail, socialLinks: foundSocialLinks };
 };
 
 /**
