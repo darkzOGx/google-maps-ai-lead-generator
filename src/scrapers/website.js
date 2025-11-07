@@ -9,9 +9,9 @@ import { CheerioCrawler } from 'crawlee';
 export const extractEmailFromWebsite = async (websiteUrl) => {
     if (!websiteUrl) return { email: null, socialLinks: { linkedin: null, facebook: null, twitter: null, instagram: null } };
 
-    // PRODUCTION FIX: Add 30s timeout to prevent hanging
+    // PRODUCTION FIX: Add 45s timeout to prevent hanging (increased from 30s)
     const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Email extraction timeout (30s)')), 30000)
+        setTimeout(() => reject(new Error('Email extraction timeout (45s)')), 45000)
     );
 
     try {
@@ -78,8 +78,8 @@ async function extractEmailWithCrawler(websiteUrl) {
         maxRequestsPerCrawl: maxPagesToVisit, // Limit pages to maxPagesToVisit
         maxConcurrency: 1,
         maxRequestRetries: 1,
-        requestHandlerTimeoutSecs: 15, // Reduced for CPU overload
-        navigationTimeoutSecs: 10, // Faster navigation
+        requestHandlerTimeoutSecs: 30, // Increased timeout for slow websites
+        navigationTimeoutSecs: 15, // Reasonable navigation timeout
         requestQueue,
 
         async requestHandler({ $, request, enqueueLinks }) {

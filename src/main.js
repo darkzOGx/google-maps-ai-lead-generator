@@ -93,6 +93,13 @@ try {
     console.log('🚀 Starting B2B Lead Generation Actor');
     console.log('Mode:', isBasicMode ? '⚡ BASIC (Fast)' : '🎯 ENRICHED (Slow)');
     console.log('Performance:', `${performancePreset.toUpperCase()} (${input.maxConcurrency} main / ${input.detailConcurrency} detail browsers)`);
+
+    // Warn if concurrency is too high for enriched mode
+    if (isEnrichedMode && input.maxConcurrency > 5) {
+        console.log('⚠️  WARNING: High concurrency (>5) may cause CPU overload and timeouts in enriched mode.');
+        console.log('⚠️  Recommended: Use maxConcurrency 3-5 for best results with email extraction.');
+    }
+
     console.log('Query:', input.searchQueries[0].category, 'in', input.searchQueries[0].location);
     console.log('Max results:', input.searchQueries[0].maxResults);
     console.log('Email extraction:', input.enrichment.extractEmails);

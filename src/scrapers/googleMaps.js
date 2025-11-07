@@ -474,7 +474,7 @@ export const scrapeGoogleMaps = async ({
         retries: 5 // Increased for production reliability
     };
 
-    console.log(`⚙️ Detail crawler settings: ${usingProxies ? 'WITH' : 'WITHOUT'} proxies (concurrency: ${detailSettings.concurrency}, timeout: ${detailSettings.navTimeout}s)`);
+    console.log(`⚙️ Detail crawler settings: ${usingProxies ? 'WITH' : 'WITHOUT'} proxies (concurrency: ${detailSettings.concurrency}, nav timeout: ${detailSettings.navTimeout}s, handler timeout: ${detailSettings.handlerTimeout}s)`);
 
     const detailCrawler = new PuppeteerCrawler({
         proxyConfiguration,
