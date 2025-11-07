@@ -105,7 +105,8 @@ async function extractEmailWithCrawler(websiteUrl) {
 
                             // Remove any remaining non-email characters at start
                             // Match ONLY the valid email part (word chars + special chars before @)
-                            const cleanMatch = cleaned.match(/[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+                            // CRITICAL FIX: Add word boundary \b at end to prevent "gmail.comCopyright"
+                            const cleanMatch = cleaned.match(/[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/);
                             return cleanMatch ? cleanMatch[0] : null;
                         })
                         .filter((email) => {

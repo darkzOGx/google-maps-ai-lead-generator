@@ -690,6 +690,12 @@ export const scrapeGoogleMaps = async ({
                     instagram: await page.$eval('a[href*="instagram.com"]', (el) => el.href).catch(() => null),
                 };
 
+                // Log social media extraction results
+                const socialCount = Object.values(socialLinks).filter(link => link !== null).length;
+                if (socialCount > 0) {
+                    console.log(`🔗 Found ${socialCount} social links:`, socialLinks);
+                }
+
                 // Extract reviews if enabled
                 let reviews = [];
                 if (leadData.extractReviews && leadData.maxReviewsPerPlace > 0) {
