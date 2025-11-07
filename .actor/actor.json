@@ -2,7 +2,7 @@
   "actorSpecification": 1,
   "name": "b2b-lead-generator",
   "title": "B2B Lead Generator - Google Maps Scraper with Email Finder",
-  "version": "1.9",
+  "version": "2.0",
   "description": "Generate verified B2B leads from Google Maps with decision-maker contacts, email validation, and AI-powered lead scoring. Perfect for sales teams and agencies.",
   "categories": ["BUSINESS", "ECOMMERCE", "MARKETING"],
   "dockerfile": "./Dockerfile",

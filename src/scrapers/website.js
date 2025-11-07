@@ -11,7 +11,7 @@ export const extractEmailFromWebsite = async (websiteUrl) => {
 
     let foundEmail = null;
     const visitedUrls = new Set();
-    const maxPagesToVisit = 5; // Check homepage + up to 4 other pages
+    const maxPagesToVisit = 2; // Check homepage + 1 contact page (reduced for performance)
 
     // Common patterns for email addresses
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
@@ -48,8 +48,8 @@ export const extractEmailFromWebsite = async (websiteUrl) => {
         maxRequestsPerCrawl: maxPagesToVisit, // Limit pages to maxPagesToVisit
         maxConcurrency: 1,
         maxRequestRetries: 1,
-        requestHandlerTimeoutSecs: 20, // Faster timeout per page
-        navigationTimeoutSecs: 15, // Faster navigation
+        requestHandlerTimeoutSecs: 15, // Reduced for CPU overload
+        navigationTimeoutSecs: 10, // Faster navigation
         // Each email extraction gets its own queue
         requestQueue: await Actor.openRequestQueue(),
 
@@ -65,6 +65,12 @@ export const extractEmailFromWebsite = async (websiteUrl) => {
 
                 // Find all email addresses
                 const rawEmails = pageText.match(emailRegex);
+
+                // DEBUG: Log what was searched
+                console.log(`🔍 Searched ${request.url} - Found ${rawEmails ? rawEmails.length : 0} potential emails`);
+                if (rawEmails) {
+                    console.log(`   Raw emails found: ${rawEmails.slice(0, 5).join(', ')}`);
+                }
 
                 if (rawEmails && rawEmails.length > 0) {
                     // Clean and validate emails
@@ -96,6 +102,12 @@ export const extractEmailFromWebsite = async (websiteUrl) => {
                             const domainLower = domain.toLowerCase();
                             return !blacklistedDomains.some((blacklisted) => domainLower.includes(blacklisted));
                         });
+
+                    // DEBUG: Log what survived cleaning
+                    console.log(`   After cleaning: ${cleanedEmails.length} valid emails`);
+                    if (cleanedEmails.length > 0) {
+                        console.log(`   Cleaned emails: ${cleanedEmails.slice(0, 3).join(', ')}`);
+                    }
 
                     if (cleanedEmails.length > 0) {
                         // Prioritize certain email prefixes (more likely to be contact emails)
@@ -132,7 +144,7 @@ export const extractEmailFromWebsite = async (websiteUrl) => {
                         .map((_, el) => $(el).attr('href'))
                         .get()
                         .filter((href) => href && !href.startsWith('#') && !href.startsWith('mailto:'))
-                        .slice(0, 4); // Limit to 4 additional pages
+                        .slice(0, 1); // Limit to 1 additional page (homepage + 1 = 2 total)
 
                     for (const link of contactLinks) {
                         try {

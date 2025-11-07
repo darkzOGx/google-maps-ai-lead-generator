@@ -64,8 +64,8 @@ export const scrapeGoogleMaps = async ({
 
     const crawler = new PuppeteerCrawler({
         proxyConfiguration,
-        // Fast mode: can be more aggressive since we're only doing listing pages
-        maxConcurrency: fastMode ? Math.min(maxConcurrency, 5) : Math.min(maxConcurrency, 3),
+        // Respect user's performance preset choice (Balanced/Fast/Turbo)
+        maxConcurrency: maxConcurrency,
         maxRequestRetries: 3,
         requestHandlerTimeoutSecs: 90, // Reduced from 120 for faster failures
         navigationTimeoutSecs: 45, // Fail faster on navigation issues
