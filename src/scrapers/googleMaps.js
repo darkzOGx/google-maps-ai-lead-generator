@@ -527,36 +527,48 @@ export const scrapeGoogleMaps = async ({
                 let phone = null;
                 try {
                     phone = await page.evaluate(() => {
-                        // Strategy 1: Look for phone in buttons/links with aria-label
-                        const buttons = Array.from(document.querySelectorAll('button, a, div'));
-                        for (const el of buttons) {
-                            const ariaLabel = el.getAttribute('aria-label') || '';
-                            const text = el.textContent || '';
-
-                            // Check aria-label for phone
-                            if (ariaLabel.toLowerCase().includes('phone')) {
-                                const match = ariaLabel.match(/[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}/);
+                        // Strategy 1: Look for phone in buttons/links with "phone" label (most reliable)
+                        const buttons = Array.from(document.querySelectorAll('button[aria-label*="hone" i], a[aria-label*="hone" i]'));
+                        for (const btn of buttons) {
+                            const ariaLabel = btn.getAttribute('aria-label') || '';
+                            // Extract phone from aria-label with strict patterns
+                            const patterns = [
+                                /\+1[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/,  // +1 (123) 456-7890 or +1-123-456-7890
+                                /\(?\d{3}\)?[\s-]\d{3}[\s-]\d{4}/,             // (123) 456-7890 or 123-456-7890 (requires separator)
+                            ];
+                            for (const pattern of patterns) {
+                                const match = ariaLabel.match(pattern);
                                 if (match) return match[0];
-                            }
-
-                            // Check text content for phone
-                            const phoneMatch = text.match(/[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4}/);
-                            if (phoneMatch && !text.includes('@')) { // exclude emails
-                                return phoneMatch[0];
                             }
                         }
 
-                        // Strategy 2: Search entire page for phone pattern
+                        // Strategy 2: Search for phone number buttons in action area
+                        const actionButtons = Array.from(document.querySelectorAll('[data-item-id*="phone"], [data-tooltip*="hone" i]'));
+                        for (const el of actionButtons) {
+                            const text = el.textContent || el.getAttribute('aria-label') || '';
+                            const match = text.match(/\(?\d{3}\)?[\s-]\d{3}[\s-]\d{4}/);
+                            if (match && text.length < 50) { // Avoid matching long text blocks
+                                return match[0];
+                            }
+                        }
+
+                        // Strategy 3: Last resort - search page with STRICT patterns only
                         const bodyText = document.body.textContent || '';
-                        const patterns = [
-                            /\(\d{3}\)\s?\d{3}-\d{4}/,  // (123) 456-7890
-                            /\d{3}-\d{3}-\d{4}/,        // 123-456-7890
-                            /\+\d{1,2}\s?\(\d{3}\)\s?\d{3}-\d{4}/  // +1 (123) 456-7890
+                        const strictPatterns = [
+                            /\(\d{3}\)\s\d{3}-\d{4}/,      // (123) 456-7890 - exact format
+                            /\d{3}-\d{3}-\d{4}(?!\d)/,     // 123-456-7890 - not followed by more digits
+                            /\+1\s\(\d{3}\)\s\d{3}-\d{4}/, // +1 (123) 456-7890
                         ];
 
-                        for (const pattern of patterns) {
+                        for (const pattern of strictPatterns) {
                             const match = bodyText.match(pattern);
-                            if (match) return match[0];
+                            if (match) {
+                                // Validate it's not part of a larger number (like a rating)
+                                const phone = match[0];
+                                if (!/\d\.\d/.test(phone)) { // Exclude if contains decimal (like "4.8")
+                                    return phone;
+                                }
+                            }
                         }
 
                         return null;

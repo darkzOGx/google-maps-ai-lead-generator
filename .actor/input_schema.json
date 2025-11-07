@@ -112,7 +112,7 @@
     "extractReviews": {
       "title": "Extract customer reviews",
       "type": "boolean",
-      "description": "Extract customer reviews for sentiment analysis (adds ~$0.02 per lead)",
+      "description": "Extract customer reviews for sentiment analysis (adds ~$0.02 per lead and 30s processing time). Disable for faster runs.",
       "default": false
     },
     "maxReviewsPerPlace": {

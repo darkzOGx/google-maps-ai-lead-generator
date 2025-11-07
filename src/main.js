@@ -86,7 +86,7 @@ try {
         },
         maxConcurrency: rawInput.maxConcurrency || perfSettings.maxConcurrency,
         detailConcurrency: rawInput.maxConcurrency
-            ? Math.max(2, Math.floor(rawInput.maxConcurrency * 0.6)) // Scale detail concurrency (60% of main)
+            ? Math.max(1, Math.floor(rawInput.maxConcurrency * 0.4)) // Scale detail concurrency (40% of main, min 1)
             : perfSettings.detailConcurrency,
     };
 
