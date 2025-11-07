@@ -216,6 +216,9 @@ export const scrapeGoogleMaps = async ({
                                     if (match) {
                                         rating = parseFloat(match[1]);
                                         ratingStrategy = 'aria-label-star';
+                                    } else {
+                                        // DEBUG: Log failed aria-label extractions to identify pattern issues
+                                        console.log(`⚠️ Rating aria-label found but regex failed: "${ratingText}" for ${name}`);
                                     }
                                 }
 
