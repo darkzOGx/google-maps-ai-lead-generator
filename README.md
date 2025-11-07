@@ -26,29 +26,31 @@ This is the **ONLY** Google Maps scraper on Apify with **AI Lead Scoring (A+ to 
 | **Data Validation** | 🟢 25+ blacklist domains | 🟡 Basic |
 | **Reviews Extraction** | 🟢 Optional (up to 100/place) | 🟢 Available |
 | **Multi-Language** | 🟢 10 languages | 🟡 Limited |
-| **Pricing Model** | 🟢 **Simple all-inclusive** | 🔴 Complex with add-ons |
-| **Price per 1,000 Leads** | 🟢 **$25** (everything included) | 🔴 $15-22+ (base + add-ons) |
+| **Pricing Model** | 🟢 **All-in-one pricing** | 🟡 Basic data only |
+| **Price per 1,000 Leads** | 🟢 **$5** (basic) / **$30** (with emails) | 🟢 $4 (basic only) |
 
 ### 💰 Pricing Breakdown Comparison
 
-**Competitor pricing (for 1,000 leads with full enrichment):**
-- Base scraping: $15.00
-- Company contacts add-on: +$2.00
-- Business leads enrichment: +$5.00
-- **Total: $22.00** (limited email extraction, no scoring)
+**Competitor (Google Maps Scraper):**
+- Base scraping only: **$4 per 1,000 leads**
+- Basic data: name, rating, reviews, address
+- **NO email extraction** (not available)
+- **NO lead scoring** (not available)
+- $49/month plan: 15,000-20,000 basic results
 
-**This Actor (for 1,000 leads with everything):**
-- **Total: $25.00** ✅
-  - 100% email extraction included
-  - AI lead scoring included
-  - Reviews extraction included
-  - All filters included
-  - No hidden add-on fees
+**This Actor:**
+- **Basic Mode:** $5 per 1,000 leads (10x faster, basic data)
+- **Full Mode with Emails:** $30 per 1,000 leads ✅
+  - 70% email extraction included
+  - AI lead scoring A+ to F
+  - Website, phone, address, social links
+  - All filters and enrichment included
 
-**You get MORE for only $3 extra:**
-- 70% vs 40-50% email extraction (**$30+ value per 1,000 leads**)
-- AI lead scoring saves **10+ hours** of manual qualification
-- Cleaner data means **higher conversion rates**
+**The Difference:**
+- Competitor gives you **names and addresses** for $4
+- We give you **sales-ready leads with emails** for $30
+- 70% email extraction = **actual contact ability**
+- AI scoring saves **10+ hours** of manual qualification
 
 ### 🏆 Real Performance Metrics (Production Tested)
 
@@ -197,14 +199,14 @@ Zazz,contact@zazz.io,5.0,30,85,A,Software company
 - 10x faster scraping speed
 - Basic data: name, rating, reviews, Google Maps URL
 - Perfect for building large lead lists quickly
-- Cost: $0.005 per lead (~$5 for 1,000 leads)
+- **Cost: $5 per 1,000 leads** (similar to competitor's $4)
 
 **🎯 Enriched (Slow) Mode:** (Recommended)
 - Full contact information extraction
 - Includes: website, phone, email, address, social links
 - AI-powered lead scoring (A+ to F grades)
 - Perfect for sales-ready leads
-- Cost: $0.03 per lead (~$30 for 1,000 leads)
+- **Cost: $30 per 1,000 leads** (70% with verified emails)
 
 ### 1. Basic Configuration (Most Popular)
 
@@ -314,29 +316,35 @@ Zazz,contact@zazz.io,5.0,30,85,A,Software company
 
 ## 📈 Pricing & Cost Calculator
 
-### Recommended Pricing Strategy
-
-**Charge customers:** $59/month for 2,000 leads
-**Your cost:** ~$60 in Apify compute units
-**Your profit:** Break-even at scale, make profit through volume or upsells
-
 ### Compute Unit Breakdown
 
 | Scraping Mode | Cost per Lead | 500 Leads | 1,000 Leads | 2,000 Leads |
 |---------------|--------------|-----------|-------------|-------------|
-| **Fast Mode** | $0.005 | $2.50 CU | $5 CU | $10 CU |
+| **Basic Mode** | $0.005 | $2.50 CU | $5 CU | $10 CU |
 | **Full Mode (no email)** | $0.02 | $10 CU | $20 CU | $40 CU |
 | **Full Mode + Emails** | $0.03 | $15 CU | $30 CU | $60 CU |
 | **Full + Emails + Reviews** | $0.05 | $25 CU | $50 CU | $100 CU |
 
+### Recommended Plans
+
+**Apify $49 Starter Plan Gets You:**
+- **With Basic Mode:** 10,000 basic leads (names, ratings, addresses)
+- **With Email Extraction:** 1,600 sales-ready leads with emails + AI scoring
+- **Free $5 Credit:** 165 leads with full email extraction
+
+**Compare to Competitor ($49 plan):**
+- **Competitor:** 15,000-20,000 basic names only
+- **This Actor:** 1,600 leads with emails + AI grades + qualification
+
 ### ROI Comparison
 
-| Method | Cost for 2,000 Leads | Quality | Delivery Time |
-|--------|---------------------|---------|---------------|
-| **This Actor** | $60 (compute units) | A+ to F graded | 1-2 hours |
-| **Lead Vendors** | $2,000-$4,000 | Unknown | 3-7 days |
-| **Manual Research** | $1,000+ (labor) | Variable | 40+ hours |
-| **Competitor Scrapers** | $100+ (no scoring) | Raw data | 2-4 hours |
+| Method | Cost for 1,000 Leads | Email Included | Quality Scoring | Delivery |
+|--------|---------------------|----------------|-----------------|----------|
+| **Competitor Scraper** | $4 | ❌ No | ❌ No | 30 min |
+| **This Actor (Basic)** | $5 | ❌ No | ❌ No | 15 min |
+| **This Actor (Full)** | $30 | ✅ 70% rate | ✅ A+ to F | 1-2 hours |
+| **Lead Vendors** | $500-$2,000 | ✅ Yes | ❌ No | 3-7 days |
+| **Manual Research** | $500+ (labor) | ✅ Yes | ⚠️ Manual | 20+ hours |
 
 ### Free Tier Benefits
 
