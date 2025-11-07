@@ -243,16 +243,12 @@ async function extractEmailWithCrawler(websiteUrl) {
         await crawler.run([websiteUrl]);
     } catch (error) {
         console.log(`⚠️ Email extraction failed for ${websiteUrl}: ${error.message}`);
-    } finally {
-        // Cleanup request queue after crawler fully completes
-        // Use setTimeout to ensure all pending operations finish
-        await new Promise(resolve => setTimeout(resolve, 100));
-        try {
-            await requestQueue.drop();
-        } catch (dropError) {
-            // Silently ignore cleanup errors - queue might already be deleted
-        }
     }
+
+    // NOTE: We intentionally don't drop the request queue here
+    // The crawler's async cleanup runs after run() returns, causing race conditions
+    // Apify automatically cleans up queues after actor finishes
+    // These queues are tiny (max 2 requests) so storage impact is negligible
 
     // Log found social links
     const socialCount = Object.values(foundSocialLinks).filter(link => link !== null).length;
