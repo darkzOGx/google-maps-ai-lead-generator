@@ -19,12 +19,12 @@ try {
     const isEnrichedMode = scrapingMode === 'enriched';
 
     // Determine performance preset (concurrency settings)
-    // PRODUCTION FIX: Reduced defaults to prevent CPU overload
+    // PRODUCTION FIX: Reduced defaults to prevent CPU overload and timeouts
     const performancePreset = rawInput.performancePreset || 'balanced';
     const performanceConfig = {
-        balanced: { maxConcurrency: 3, detailConcurrency: 2, memoryMB: 8192 },
-        fast: { maxConcurrency: 5, detailConcurrency: 3, memoryMB: 16384 },
-        turbo: { maxConcurrency: 8, detailConcurrency: 5, memoryMB: 32768 },
+        balanced: { maxConcurrency: 3, detailConcurrency: 1, memoryMB: 8192 },  // Reduced from 2→1 to prevent CPU overload
+        fast: { maxConcurrency: 5, detailConcurrency: 2, memoryMB: 16384 },     // Reduced from 3→2
+        turbo: { maxConcurrency: 8, detailConcurrency: 3, memoryMB: 32768 },    // Reduced from 5→3
     };
     const perfSettings = performanceConfig[performancePreset] || performanceConfig.balanced;
 

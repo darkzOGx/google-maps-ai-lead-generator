@@ -469,8 +469,8 @@ export const scrapeGoogleMaps = async ({
 
     const detailSettings = {
         concurrency: detailConcurrencyValue,
-        navTimeout: 30, // Consistent with main crawler
-        handlerTimeout: 60, // Consistent with main crawler
+        navTimeout: 60, // Increased to handle slow Google Maps pages
+        handlerTimeout: 90, // Increased to handle slow extraction + email crawling
         retries: 5 // Increased for production reliability
     };
 
