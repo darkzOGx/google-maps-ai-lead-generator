@@ -1,7 +1,7 @@
 {
   "actorSpecification": 1,
-  "name": "google-maps-email-scraper",
-  "title": "Google Maps Email Scraper & B2B Lead Generator with AI",
+  "name": "google-maps-ai-lead-generator",
+  "title": "Google Maps AI Lead Generator - Email & Contact Scraper",
   "version": "2.1",
   "description": "Extract verified emails from Google Maps businesses. 70% email success rate, AI lead scoring A+ to F, phone numbers & addresses. Export to CSV/Excel.",
   "categories": ["BUSINESS", "ECOMMERCE", "MARKETING"],
