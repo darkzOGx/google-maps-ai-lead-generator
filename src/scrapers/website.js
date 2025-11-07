@@ -128,15 +128,21 @@ async function extractEmailWithCrawler(websiteUrl) {
                     const cleanedEmails = rawEmails
                         .map((email) => {
                             // Remove phone number patterns from the start (e.g., "206-2832lauraeason@domain.com")
-                            // Phone patterns: (xxx) xxx-xxxx, xxx-xxx-xxxx, xxx.xxx.xxxx
                             let cleaned = email.replace(/^[\d\s\-\.\(\)]+/, '');
 
-                            // Remove any remaining non-email characters at start
-                            // Match ONLY the valid email part (word chars + special chars before @)
-                            // CRITICAL FIX: Limit TLD to 2-4 chars + negative lookahead to prevent junk
-                            // Examples: "gmail.comCopyright" → "gmail.com", "gmail.comj" → rejected
-                            const cleanMatch = cleaned.match(/[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}(?![a-zA-Z0-9])/);
-                            return cleanMatch ? cleanMatch[0] : null;
+                            // Step 1: Extract email pattern (more permissive - allows trailing junk)
+                            // Match: localpart@domain.tld where TLD is 2-6 letters
+                            const emailMatch = cleaned.match(/[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}/);
+                            if (!emailMatch) return null;
+
+                            let extractedEmail = emailMatch[0];
+
+                            // Step 2: Trim trailing junk from the TLD
+                            // Remove any letters beyond a valid TLD (e.g., "gmail.comCopyright" → "gmail.com")
+                            // Valid TLDs are 2-4 chars, so "comCopyright" should become "com"
+                            extractedEmail = extractedEmail.replace(/(\.[a-zA-Z]{2,4})[a-zA-Z]+$/, '$1');
+
+                            return extractedEmail;
                         })
                         .filter((email) => {
                             if (!email) return false;
