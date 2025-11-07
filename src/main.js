@@ -84,12 +84,14 @@ try {
             apifyProxyGroups: []
         },
         maxConcurrency: rawInput.maxConcurrency || perfSettings.maxConcurrency,
-        detailConcurrency: perfSettings.detailConcurrency, // Separate concurrency for detail page fetching
+        detailConcurrency: rawInput.maxConcurrency
+            ? Math.max(2, Math.floor(rawInput.maxConcurrency * 0.6)) // Scale detail concurrency (60% of main)
+            : perfSettings.detailConcurrency,
     };
 
     console.log('🚀 Starting B2B Lead Generation Actor');
     console.log('Mode:', isBasicMode ? '⚡ BASIC (Fast)' : '🎯 ENRICHED (Slow)');
-    console.log('Performance:', `${performancePreset.toUpperCase()} (${perfSettings.maxConcurrency} concurrent browsers)`);
+    console.log('Performance:', `${performancePreset.toUpperCase()} (${input.maxConcurrency} main / ${input.detailConcurrency} detail browsers)`);
     console.log('Query:', input.searchQueries[0].category, 'in', input.searchQueries[0].location);
     console.log('Max results:', input.searchQueries[0].maxResults);
     console.log('Email extraction:', input.enrichment.extractEmails);
