@@ -62,9 +62,10 @@
     },
 
     "minRating": {
-      "title": "Set a minimum star rating",
+      "title": "Minimum star rating (0-5)",
       "type": "number",
-      "description": "Only scrape businesses with rating >= this value (0-5 stars). Set to 0 for no filter.",
+      "description": "Only scrape businesses with rating >= this value. Set to 0 for no filter.",
+      "editor": "number",
       "minimum": 0,
       "maximum": 5,
       "default": 4.0,
